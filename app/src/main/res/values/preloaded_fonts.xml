@@ -1,0 +1,12 @@
+<resources>
+    <array name="preloaded_fonts" translatable="false">
+        <item>@font/poppins_regular</item>
+        <item>@font/poppins_bold</item>
+        <item>@font/roboto_regular</item>
+        <item>@font/montserrat_regular</item>
+        <item>@font/lato_regular</item>
+        <item>@font/oswald_regular</item>
+        <item>@font/pacifico_regular</item>
+        <item>@font/playfair_regular</item>
+    </array>
+</resources>

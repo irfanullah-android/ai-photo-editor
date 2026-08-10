@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Simple dark canvas backdrop (swap for a real checker-pattern drawable
+  if you want the classic "transparent PNG" look).
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#141414" />
+</shape>

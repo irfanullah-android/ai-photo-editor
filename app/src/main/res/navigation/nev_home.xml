@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_home"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.homefragments.HomeFragment"
+        android:label="Home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/discoverFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.homefragments.DiscoverFragment"
+        android:label="Discover"
+        tools:layout="@layout/fragment_discover" />
+
+    <fragment
+        android:id="@+id/aiCreationFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.homefragments.AICreationFragment"
+        android:label="AI Creation"
+        tools:layout="@layout/fragment_ai_creation" />
+
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.homefragments.SettingsFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_settings" />
+
+</navigation>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Přeskočit</string>
+    <string name="next">Další</string>
+    <string name="select">Vybrat</string>
+    <string name="this_action_can_contain_ads"> Obsahuje reklamy</string>
+    <string name="get_started">ZAČÍT</string>
+    <string name="ai_tools">Nástroje AI</string>
+    <string name="history">Historie</string>
+    <string name="effect_preview" />
+    <string name="start">Spustit</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Zaostřete\nOkamžik</string>
+    <string name="on_boarding_1_white_word">Okamžik</string>
+    <string name="on_boarding_1_title_2">Okamžitě zvyšte jasnost pomocí AI.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Přetočit\na Obnovit</string>
+    <string name="on_boarding_2_white_word">a</string>
+    <string name="on_boarding_2_title_2">Vraťte staré vzpomínky k životu.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Záře jako\nKouzlo</string>
+    <string name="on_boarding_3_white_word">jako</string>
+    <string name="on_boarding_3_title_2">Zdokonalte svůj vzhled během sekund.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Láska v\nRámcích</string>
+    <string name="on_boarding_4_white_word">v</string>
+    <string name="on_boarding_4_title_2">Proměňte portréty v romantické okamžiky.</string>
+
+    <string name="home">Domů</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Slova mají sílu,\na moudrost nemá hranice.\nNechte se vést inspirací!</string>
+    <string name="loading">Načítání...</string>
+    <string name="hello_blank_fragment">Ahoj prázdný fragment</string>
+    <string name="continu">Pokračovat</string>
+    <string name="select_your_language">Vyberte svůj jazyk</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Vyžadováno oprávnění fotoaparátu</string>
+    <string name="camera_permission_description">Některé funkce vyžadují přístup k fotoaparátu zařízení. Povolte prosím oprávnění fotoaparátu pro pokračování.</string>
+    <string name="require_notification_permission">Vyžadováno oprávnění oznámení</string>
+    <string name="notification_permission_description">Tato aplikace potřebuje oprávnění oznámení k zasílání důležitých upozornění.</string>
+    <string name="require_storage_permission">Vyžadováno oprávnění úložiště</string>
+    <string name="storage_permission_description">Tato aplikace potřebuje přístup k vašim mediálním souborům (audio a video) pro správné fungování.</string>
+
+    <string name="settings">Nastavení</string>
+    <string name="cancel">Zrušit</string>
+    <string name="privacy_policy">Zásady ochrany osobních údajů</string>
+    <string name="share_app">Sdílet aplikaci</string>
+    <string name="rate_us">Ohodnoťte nás</string>
+    <string name="more_apps">Další aplikace</string>
+
+    <string name="permission">Oprávnění</string>
+    <string name="storage">Úložiště</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Budeme potřebovat vaše oprávnění úložiště pro lepší zážitek</string>
+    <string name="camera">Fotoaparát</string>
+    <string name="notification_history">Historie oznámení</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Udělit přístup ke kameře a souborům]]></string>
+    <string name="give_access">Udělit přístup</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Fotografie</string>
+    <string name="label_collage">Koláž</string>
+    <string name="label_beautify">Zkrášlit</string>
+    <string name="hint_search">Hledat</string>
+    <string name="label_ai_group_photo">SKUPINOVÁ FOTOGRAFIE AI</string>
+    <string name="label_ai_single_photo">JEDNOTLIVÁ FOTOGRAFIE AI</string>
+    <string name="cd_toggle_toolbar">Přepnout panel nástrojů</string>
+    <string name="label_canvas">Plátno</string>
+    <string name="label_filter">Filtr</string>
+    <string name="label_adjust">Upravit</string>
+    <string name="label_effect">Efekt</string>
+    <string name="label_sticker">Nálepka</string>
+    <string name="label_text">Text</string>
+    <string name="label_remove">Odstranit</string>
+    <string name="label_enhance">Vylepšit</string>
+    <string name="label_doodle">Kresba</string>
+    <string name="label_crop">Oříznout</string>
+    <string name="label_frame">Rámec</string>
+    <string name="label_rotate">Otočit</string>
+</resources>

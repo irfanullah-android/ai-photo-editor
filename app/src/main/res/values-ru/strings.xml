@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Пропустить</string>
+    <string name="next">Далее</string>
+    <string name="select">Выбрать</string>
+    <string name="this_action_can_contain_ads"> Содержит рекламу</string>
+    <string name="get_started">НАЧАТЬ</string>
+    <string name="ai_tools">Инструменты ИИ</string>
+    <string name="history">История</string>
+    <string name="effect_preview" />
+    <string name="start">Начать</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Заострите\nМомент</string>
+    <string name="on_boarding_1_white_word">Момент</string>
+    <string name="on_boarding_1_title_2">Мгновенно улучшите четкость с помощью ИИ.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Перемотка\n&amp; Восстановление</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Верните старые воспоминания к жизни.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Сияйте как\nМагия</string>
+    <string name="on_boarding_3_white_word">как</string>
+    <string name="on_boarding_3_title_2">Усовершенствуйте свой образ за секунды.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Любовь в\nРамках</string>
+    <string name="on_boarding_4_white_word">в</string>
+    <string name="on_boarding_4_title_2">Превратите портреты в романтические моменты.</string>
+
+    <string name="home">Главная</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Слова имеют силу,\nа мудрость не имеет границ.\nПусть вдохновение ведёт вас!</string>
+    <string name="loading">Загрузка...</string>
+    <string name="hello_blank_fragment">Привет пустой фрагмент</string>
+    <string name="continu">Продолжить</string>
+    <string name="select_your_language">Выберите язык</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Требуется разрешение камеры</string>
+    <string name="camera_permission_description">Некоторые функции требуют доступа к камере устройства. Пожалуйста, разрешите доступ к камере для продолжения.</string>
+    <string name="require_notification_permission">Требуется разрешение на уведомления</string>
+    <string name="notification_permission_description">Этому приложению необходимо разрешение на уведомления для отправки важных оповещений.</string>
+    <string name="require_storage_permission">Требуется разрешение на хранилище</string>
+    <string name="storage_permission_description">Этому приложению необходим доступ к вашим медиафайлам (аудио &amp; видео) для корректной работы.</string>
+
+    <string name="settings">Настройки</string>
+    <string name="cancel">Отмена</string>
+    <string name="privacy_policy">Политика конфиденциальности</string>
+    <string name="share_app">Поделиться приложением</string>
+    <string name="rate_us">Оцените нас</string>
+    <string name="more_apps">Другие приложения</string>
+
+    <string name="permission">Разрешение</string>
+    <string name="storage">Хранилище</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Нам потребуется разрешение на хранилище для лучшего опыта</string>
+    <string name="camera">Камера</string>
+    <string name="notification_history">История уведомлений</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Предоставить доступ к камере и файлам]]></string>
+    <string name="give_access">Предоставить доступ</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Фото</string>
+    <string name="label_collage">Коллаж</string>
+    <string name="label_beautify">Украсить</string>
+    <string name="hint_search">Поиск</string>
+    <string name="label_ai_group_photo">ГРУППОВОЕ ФОТО ИИ</string>
+    <string name="label_ai_single_photo">ОДИНОЧНОЕ ФОТО ИИ</string>
+    <string name="cd_toggle_toolbar">Переключить панель инструментов</string>
+    <string name="label_canvas">Холст</string>
+    <string name="label_filter">Фильтр</string>
+    <string name="label_adjust">Настройка</string>
+    <string name="label_effect">Эффект</string>
+    <string name="label_sticker">Стикер</string>
+    <string name="label_text">Текст</string>
+    <string name="label_remove">Удалить</string>
+    <string name="label_enhance">Улучшить</string>
+    <string name="label_doodle">Рисунок</string>
+    <string name="label_crop">Обрезать</string>
+    <string name="label_frame">Рамка</string>
+    <string name="label_rotate">Повернуть</string>
+</resources>

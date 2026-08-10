@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">தவிர்</string>
+    <string name="next">அடுத்து</string>
+    <string name="select">தேர்ந்தெடு</string>
+    <string name="this_action_can_contain_ads"> விளம்பரங்கள் இருக்கலாம்</string>
+    <string name="get_started">தொடங்குங்கள்</string>
+    <string name="ai_tools">AI கருவிகள்</string>
+    <string name="history">வரலாறு</string>
+    <string name="effect_preview" />
+    <string name="start">தொடங்கு</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">தருணத்தை\nதெளிவுபடுத்துங்கள்</string>
+    <string name="on_boarding_1_white_word">தருணத்தை</string>
+    <string name="on_boarding_1_title_2">AI மூலம் உடனடியாக தெளிவை மேம்படுத்துங்கள்.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">பின்னோக்கி\nமீட்டெடு</string>
+    <string name="on_boarding_2_white_word">மீட்டெடு</string>
+    <string name="on_boarding_2_title_2">பழைய நினைவுகளை மீண்டும் உயிர்ப்பிக்கவும்.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">மாயம் போல்\nமிளிரவும்</string>
+    <string name="on_boarding_3_white_word">போல்</string>
+    <string name="on_boarding_3_title_2">சில வினாடிகளில் உங்கள் தோற்றத்தை சரிசெய்யவும்.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">சட்டகங்களில்\nகாதல்</string>
+    <string name="on_boarding_4_white_word">சட்டகங்களில்</string>
+    <string name="on_boarding_4_title_2">உருவப்படங்களை காதல் தருணங்களாக மாற்றவும்.</string>
+
+    <string name="home">முகப்பு</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">வார்த்தைகளுக்கு சக்தி உண்டு,\nஞானத்திற்கு எல்லை இல்லை.\nஊக்கம் உங்களை வழிநடத்தட்டும்!</string>
+    <string name="loading">ஏற்றுகிறது...</string>
+    <string name="hello_blank_fragment">வணக்கம் வெற்று fragment</string>
+    <string name="continu">தொடர</string>
+    <string name="select_your_language">உங்கள் மொழியை தேர்ந்தெடுக்கவும்</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">கேமரா அனுமதி தேவை</string>
+    <string name="camera_permission_description">சில அம்சங்களுக்கு உங்கள் சாதனத்தின் கேமராவிற்கான அணுகல் தேவை. தொடர கேமரா அனுமதியை அனுமதிக்கவும்.</string>
+    <string name="require_notification_permission">அறிவிப்பு அனுமதி தேவை</string>
+    <string name="notification_permission_description">இந்த ஆப் உங்களுக்கு முக்கியமான எச்சரிக்கைகளை அனுப்ப அறிவிப்பு அனுமதி தேவை.</string>
+    <string name="require_storage_permission">சேமிப்பக அனுமதி தேவை</string>
+    <string name="storage_permission_description">இந்த ஆப் சரியாக செயல்பட உங்கள் மீடியா கோப்புகளுக்கான (ஆடியோ &amp; வீடியோ) அணுகல் தேவை.</string>
+
+    <string name="settings">அமைப்புகள்</string>
+    <string name="cancel">ரத்துசெய்</string>
+    <string name="privacy_policy">தனியுரிமைக் கொள்கை</string>
+    <string name="share_app">ஆப்பை பகிர</string>
+    <string name="rate_us">எங்களை மதிப்பிடுங்கள்</string>
+    <string name="more_apps">மேலும் ஆப்கள்</string>
+
+    <string name="permission">அனுமதி</string>
+    <string name="storage">சேமிப்பகம்</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">சிறந்த அனுபவம் அளிக்க உங்கள் சேமிப்பக அனுமதி தேவை</string>
+    <string name="camera">கேமரா</string>
+    <string name="notification_history">அறிவிப்பு வரலாறு</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[கேமரா மற்றும் கோப்பு அணுகலை வழங்குங்கள்]]></string>
+    <string name="give_access">அணுகலை வழங்கு</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">புகைப்படம்</string>
+    <string name="label_collage">கொல்லாஜ்</string>
+    <string name="label_beautify">அழகுபடுத்து</string>
+    <string name="hint_search">தேடு</string>
+    <string name="label_ai_group_photo">AI குழு புகைப்படம்</string>
+    <string name="label_ai_single_photo">AI தனி புகைப்படம்</string>
+    <string name="cd_toggle_toolbar">கருவிப்பட்டியை மாற்று</string>
+    <string name="label_canvas">கேன்வாஸ்</string>
+    <string name="label_filter">வடிகட்டி</string>
+    <string name="label_adjust">சரிசெய்</string>
+    <string name="label_effect">விளைவு</string>
+    <string name="label_sticker">ஸ்டிக்கர்</string>
+    <string name="label_text">உரை</string>
+    <string name="label_remove">அகற்று</string>
+    <string name="label_enhance">மேம்படுத்து</string>
+    <string name="label_doodle">வரைபடம்</string>
+    <string name="label_crop">வெட்டு</string>
+    <string name="label_frame">சட்டகம்</string>
+    <string name="label_rotate">சுழற்று</string>
+</resources>

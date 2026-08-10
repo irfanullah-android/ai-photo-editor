@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">ข้าม</string>
+    <string name="next">ถัดไป</string>
+    <string name="select">เลือก</string>
+    <string name="this_action_can_contain_ads"> มีโฆษณา</string>
+    <string name="get_started">เริ่มต้น</string>
+    <string name="ai_tools">เครื่องมือ AI</string>
+    <string name="history">ประวัติ</string>
+    <string name="effect_preview" />
+    <string name="start">เริ่ม</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">เพิ่มความคม\nของช่วงเวลา</string>
+    <string name="on_boarding_1_white_word">ของ</string>
+    <string name="on_boarding_1_title_2">เพิ่มความคมชัดทันทีด้วย AI</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">ย้อนกลับ\n&amp; คืนค่า</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">นำความทรงจำเก่าๆ กลับมามีชีวิตอีกครั้ง</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">เปล่งประกาย\nเหมือนมนตร์</string>
+    <string name="on_boarding_3_white_word">เหมือน</string>
+    <string name="on_boarding_3_title_2">ทำให้รูปลักษณ์ของคุณสมบูรณ์แบบในไม่กี่วินาที</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">ความรักใน\nกรอบภาพ</string>
+    <string name="on_boarding_4_white_word">ใน</string>
+    <string name="on_boarding_4_title_2">เปลี่ยนภาพบุคคลให้เป็นช่วงเวลาสุดโรแมนติก</string>
+
+    <string name="home">หน้าหลัก</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">คำพูดมีพลัง\nและปัญญาไม่มีขีดจำกัด\nให้แรงบันดาลใจนำทางคุณ!</string>
+    <string name="loading">กำลังโหลด...</string>
+    <string name="hello_blank_fragment">สวัสดี fragment ว่างเปล่า</string>
+    <string name="continu">ดำเนินการต่อ</string>
+    <string name="select_your_language">เลือกภาษาของคุณ</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">ต้องการสิทธิ์กล้อง</string>
+    <string name="camera_permission_description">บางฟีเจอร์ต้องการเข้าถึงกล้องของอุปกรณ์ โปรดอนุญาตสิทธิ์กล้องเพื่อดำเนินการต่อ</string>
+    <string name="require_notification_permission">ต้องการสิทธิ์การแจ้งเตือน</string>
+    <string name="notification_permission_description">แอปนี้ต้องการสิทธิ์การแจ้งเตือนเพื่อส่งการแจ้งเตือนสำคัญถึงคุณ</string>
+    <string name="require_storage_permission">ต้องการสิทธิ์จัดเก็บข้อมูล</string>
+    <string name="storage_permission_description">แอปนี้ต้องการเข้าถึงไฟล์มีเดียของคุณ (เสียง &amp; วิดีโอ) เพื่อทำงานได้อย่างถูกต้อง</string>
+
+    <string name="settings">การตั้งค่า</string>
+    <string name="cancel">ยกเลิก</string>
+    <string name="privacy_policy">นโยบายความเป็นส่วนตัว</string>
+    <string name="share_app">แชร์แอป</string>
+    <string name="rate_us">ให้คะแนนเรา</string>
+    <string name="more_apps">แอปเพิ่มเติม</string>
+
+    <string name="permission">สิทธิ์</string>
+    <string name="storage">พื้นที่เก็บข้อมูล</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">เราจำเป็นต้องใช้สิทธิ์จัดเก็บข้อมูลของคุณเพื่อมอบประสบการณ์ที่ดีกว่า</string>
+    <string name="camera">กล้อง</string>
+    <string name="notification_history">ประวัติการแจ้งเตือน</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[อนุญาตการเข้าถึงกล้องและไฟล์]]></string>
+    <string name="give_access">ให้สิทธิ์เข้าถึง</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">รูปภาพ</string>
+    <string name="label_collage">คอลลาจ</string>
+    <string name="label_beautify">ตกแต่ง</string>
+    <string name="hint_search">ค้นหา</string>
+    <string name="label_ai_group_photo">ภาพกลุ่ม AI</string>
+    <string name="label_ai_single_photo">ภาพเดี่ยว AI</string>
+    <string name="cd_toggle_toolbar">สลับแถบเครื่องมือ</string>
+    <string name="label_canvas">แคนวาส</string>
+    <string name="label_filter">ฟิลเตอร์</string>
+    <string name="label_adjust">ปรับแต่ง</string>
+    <string name="label_effect">เอฟเฟกต์</string>
+    <string name="label_sticker">สติ๊กเกอร์</string>
+    <string name="label_text">ข้อความ</string>
+    <string name="label_remove">ลบออก</string>
+    <string name="label_enhance">ปรับปรุง</string>
+    <string name="label_doodle">วาด落書き</string>
+    <string name="label_crop">ครอบ</string>
+    <string name="label_frame">กรอบ</string>
+    <string name="label_rotate">หมุน</string>
+</resources>

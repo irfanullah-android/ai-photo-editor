@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Sari</string>
+    <string name="next">Următor</string>
+    <string name="select">Selectați</string>
+    <string name="this_action_can_contain_ads"> Conține reclame</string>
+    <string name="get_started">ÎNCEPEȚI</string>
+    <string name="ai_tools">Instrumente AI</string>
+    <string name="history">Istoric</string>
+    <string name="effect_preview" />
+    <string name="start">Start</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Ascuțiți\nMomentul</string>
+    <string name="on_boarding_1_white_word">Momentul</string>
+    <string name="on_boarding_1_title_2">Îmbunătățiți claritatea instant cu AI.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Derulați\n&amp; Restaurați</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Readuceți amintirile vechi la viață.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Strălucți ca\nMagia</string>
+    <string name="on_boarding_3_white_word">ca</string>
+    <string name="on_boarding_3_title_2">Perfecționați-vă aspectul în câteva secunde.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Dragoste în\nRame</string>
+    <string name="on_boarding_4_white_word">în</string>
+    <string name="on_boarding_4_title_2">Transformați portretele în momente romantice.</string>
+
+    <string name="home">Acasă</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Cuvintele au putere,\niar înțelepciunea nu are limite.\nLăsați inspirația să vă ghideze!</string>
+    <string name="loading">Se încarcă...</string>
+    <string name="hello_blank_fragment">Bună fragment gol</string>
+    <string name="continu">Continuare</string>
+    <string name="select_your_language">Selectați limba dvs.</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Permisiune cameră necesară</string>
+    <string name="camera_permission_description">Unele funcții necesită acces la camera dispozitivului. Vă rugăm să permiteți accesul la cameră pentru a continua.</string>
+    <string name="require_notification_permission">Permisiune notificări necesară</string>
+    <string name="notification_permission_description">Această aplicație necesită permisiunea de notificări pentru a vă trimite alerte importante.</string>
+    <string name="require_storage_permission">Permisiune stocare necesară</string>
+    <string name="storage_permission_description">Această aplicație necesită acces la fișierele dvs. media (audio &amp; video) pentru a funcționa corect.</string>
+
+    <string name="settings">Setări</string>
+    <string name="cancel">Anulare</string>
+    <string name="privacy_policy">Politica de confidențialitate</string>
+    <string name="share_app">Partajați aplicația</string>
+    <string name="rate_us">Evaluați-ne</string>
+    <string name="more_apps">Mai multe aplicații</string>
+
+    <string name="permission">Permisiune</string>
+    <string name="storage">Stocare</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Vom avea nevoie de permisiunea dvs. de stocare pentru o experiență mai bună</string>
+    <string name="camera">Cameră</string>
+    <string name="notification_history">Istoric notificări</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Acordați acces la cameră & fișiere]]></string>
+    <string name="give_access">Acordați acces</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Fotografie</string>
+    <string name="label_collage">Colaj</string>
+    <string name="label_beautify">Înfrumusețare</string>
+    <string name="hint_search">Căutare</string>
+    <string name="label_ai_group_photo">FOTO DE GRUP AI</string>
+    <string name="label_ai_single_photo">FOTO INDIVIDUALĂ AI</string>
+    <string name="cd_toggle_toolbar">Comutare bară instrumente</string>
+    <string name="label_canvas">Pânză</string>
+    <string name="label_filter">Filtru</string>
+    <string name="label_adjust">Ajustare</string>
+    <string name="label_effect">Efect</string>
+    <string name="label_sticker">Abțibild</string>
+    <string name="label_text">Text</string>
+    <string name="label_remove">Eliminare</string>
+    <string name="label_enhance">Îmbunătățire</string>
+    <string name="label_doodle">Mâzgăleală</string>
+    <string name="label_crop">Decupare</string>
+    <string name="label_frame">Ramă</string>
+    <string name="label_rotate">Rotire</string>
+</resources>

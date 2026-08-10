@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Omitir</string>
+    <string name="next">Siguiente</string>
+    <string name="select">Seleccionar</string>
+    <string name="this_action_can_contain_ads"> Contiene anuncios</string>
+    <string name="get_started">EMPEZAR</string>
+    <string name="ai_tools">Herramientas IA</string>
+    <string name="history">Historial</string>
+    <string name="effect_preview" />
+    <string name="start">Iniciar</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Enfoca\nEl Momento</string>
+    <string name="on_boarding_1_white_word">El</string>
+    <string name="on_boarding_1_title_2">Mejora la claridad al instante con IA.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Rebobinar\n&amp; Restaurar</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Revive tus viejos recuerdos.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Brilla como\nMagia</string>
+    <string name="on_boarding_3_white_word">como</string>
+    <string name="on_boarding_3_title_2">Perfecciona tu look en segundos.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Amor en\nMarcos</string>
+    <string name="on_boarding_4_white_word">en</string>
+    <string name="on_boarding_4_title_2">Convierte retratos en momentos románticos.</string>
+
+    <string name="home">Inicio</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Las palabras tienen poder,\ny la sabiduría no tiene límites.\n¡Deja que la inspiración te guíe!</string>
+    <string name="loading">Cargando...</string>
+    <string name="hello_blank_fragment">Hola fragmento en blanco</string>
+    <string name="continu">Continuar</string>
+    <string name="select_your_language">Selecciona tu idioma</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Se requiere permiso de cámara</string>
+    <string name="camera_permission_description">Algunas funciones requieren acceso a la cámara de tu dispositivo. Por favor permite el permiso de cámara para continuar.</string>
+    <string name="require_notification_permission">Se requiere permiso de notificaciones</string>
+    <string name="notification_permission_description">Esta aplicación necesita permiso de notificaciones para enviarte alertas importantes.</string>
+    <string name="require_storage_permission">Se requiere permiso de almacenamiento</string>
+    <string name="storage_permission_description">Esta aplicación necesita acceso a tus archivos multimedia (audio &amp; video) para funcionar correctamente.</string>
+
+    <string name="settings">Configuración</string>
+    <string name="cancel">Cancelar</string>
+    <string name="privacy_policy">Política de Privacidad</string>
+    <string name="share_app">Compartir app</string>
+    <string name="rate_us">Califícanos</string>
+    <string name="more_apps">Más aplicaciones</string>
+
+    <string name="permission">Permiso</string>
+    <string name="storage">Almacenamiento</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Necesitaremos tu permiso de almacenamiento para darte una mejor experiencia</string>
+    <string name="camera">Cámara</string>
+    <string name="notification_history">Historial de notificaciones</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Conceder acceso a cámara y archivos]]></string>
+    <string name="give_access">Dar acceso</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Foto</string>
+    <string name="label_collage">Collage</string>
+    <string name="label_beautify">Embellecer</string>
+    <string name="hint_search">Buscar</string>
+    <string name="label_ai_group_photo">FOTO GRUPAL IA</string>
+    <string name="label_ai_single_photo">FOTO INDIVIDUAL IA</string>
+    <string name="cd_toggle_toolbar">Alternar barra de herramientas</string>
+    <string name="label_canvas">Lienzo</string>
+    <string name="label_filter">Filtro</string>
+    <string name="label_adjust">Ajustar</string>
+    <string name="label_effect">Efecto</string>
+    <string name="label_sticker">Pegatina</string>
+    <string name="label_text">Texto</string>
+    <string name="label_remove">Eliminar</string>
+    <string name="label_enhance">Mejorar</string>
+    <string name="label_doodle">Garabato</string>
+    <string name="label_crop">Recortar</string>
+    <string name="label_frame">Marco</string>
+    <string name="label_rotate">Rotar</string>
+</resources>

@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/app_color"
+        android:fitsSystemWindows="true"
+        tools:context=".fragments.childfragments.PhotoStudioFragment">
+
+        <!-- ==================== TOP TOOLBAR ==================== -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/topToolbar"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:background="@color/app_color"
+            android:paddingHorizontal="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_toolbar_icon_ripple"
+                android:contentDescription="Back"
+                android:padding="8dp"
+                android:src="@drawable/ic_back_arrow"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:tint="@android:color/white" />
+
+            <TextView
+                android:id="@+id/tvToolbarTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="Photo Studio"
+                android:textColor="@android:color/white"
+                android:textSize="17sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnExport"
+                app:layout_constraintStart_toEndOf="@id/btnBack"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnExport"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="Export"
+                android:textAllCaps="false"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                app:backgroundTint="@color/colorAccent"
+                app:cornerRadius="18dp"
+                app:icon="@drawable/ic_export"
+                app:iconGravity="textStart"
+                app:iconPadding="6dp"
+                app:iconSize="16dp"
+                app:iconTint="@android:color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <View
+            android:id="@+id/toolbarDivider"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:background="#1AFFFFFF"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/topToolbar" />
+
+        <!-- ==================== IMAGE CANVAS ==================== -->
+        <FrameLayout
+            android:id="@+id/imageContainer"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
+        android:clipChildren="true"
+        android:clipToPadding="true"
+        app:layout_constraintBottom_toTopOf="@id/controlsBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbarDivider">
+
+            <ja.burhanrashid52.photoeditor.PhotoEditorView
+                android:id="@+id/photoEditorView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                app:photo_src="@null" />
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_gravity="center"
+                android:indeterminateTint="@color/colorAccent"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+        <!-- ==================== CONTROLS BAR ==================== -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/controlsBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginBottom="10dp"
+            app:cardBackgroundColor="#1F1F1F"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:layout_constraintBottom_toTopOf="@id/rvEditorTools"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp">
+
+                <LinearLayout
+                    android:id="@+id/undoRedoGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <ImageButton
+                        android:id="@+id/btnUndo"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_toolbar_icon_ripple"
+                        android:contentDescription="Undo"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_undo"
+                        app:tint="@color/white" />
+
+                    <ImageButton
+                        android:id="@+id/btnRedo"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="4dp"
+                        android:background="@drawable/bg_toolbar_icon_ripple"
+                        android:contentDescription="Redo"
+                        android:padding="10dp"
+                        android:src="@drawable/ic_redo"
+                        app:tint="@color/white" />
+
+                </LinearLayout>
+
+                <View
+                    android:id="@+id/controlsDivider"
+                    android:layout_width="1dp"
+                    android:layout_height="24dp"
+                    android:layout_marginHorizontal="4dp"
+                    android:background="#26FFFFFF"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/btnCompare"
+                    app:layout_constraintStart_toEndOf="@id/undoRedoGroup"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <ImageButton
+                    android:id="@+id/btnCompare"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_toolbar_icon_ripple"
+                    android:contentDescription="Compare"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_compare"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/btnFullscreen"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:tint="@android:color/white" />
+
+                <ImageButton
+                    android:id="@+id/btnFullscreen"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="4dp"
+                    android:background="@drawable/bg_toolbar_icon_ripple"
+                    android:contentDescription="Fullscreen"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_fullscreen"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:tint="@android:color/white" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ==================== TOOLS STRIP ==================== -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvEditorTools"
+            android:layout_width="0dp"
+            android:layout_height="92dp"
+            android:background="@color/app_color"
+            android:clipToPadding="false"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:listitem="@layout/item_editor_tool" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>

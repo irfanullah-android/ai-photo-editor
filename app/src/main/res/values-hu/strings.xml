@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Kihagyás</string>
+    <string name="next">Következő</string>
+    <string name="select">Kiválasztás</string>
+    <string name="this_action_can_contain_ads"> Hirdetéseket tartalmaz</string>
+    <string name="get_started">KEZDÉS</string>
+    <string name="ai_tools">AI eszközök</string>
+    <string name="history">Előzmények</string>
+    <string name="effect_preview" />
+    <string name="start">Indítás</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Élesítse\nA Pillanatot</string>
+    <string name="on_boarding_1_white_word">A</string>
+    <string name="on_boarding_1_title_2">Növelje azonnal az élességet AI segítségével.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Visszatekerés\n&amp; Helyreállítás</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Keltse életre régi emlékeit.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Ragyogjon mint\na Varázslat</string>
+    <string name="on_boarding_3_white_word">mint</string>
+    <string name="on_boarding_3_title_2">Tökéletesítse megjelenését másodpercek alatt.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Szerelem\nKeretekben</string>
+    <string name="on_boarding_4_white_word">Keretekben</string>
+    <string name="on_boarding_4_title_2">Alakítsa portréit romantikus pillanatokká.</string>
+
+    <string name="home">Főoldal</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">A szavaknak erejük van,\nés a bölcsességnek nincs határa.\nEngedje, hogy az inspiráció vezesse!</string>
+    <string name="loading">Betöltés...</string>
+    <string name="hello_blank_fragment">Üdv üres fragment</string>
+    <string name="continu">Folytatás</string>
+    <string name="select_your_language">Válassza ki a nyelvét</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Kamera engedély szükséges</string>
+    <string name="camera_permission_description">Egyes funkciókhoz hozzáférés szükséges az eszköz kamerájához. Kérjük, engedélyezze a kamera hozzáférést a folytatáshoz.</string>
+    <string name="require_notification_permission">Értesítési engedély szükséges</string>
+    <string name="notification_permission_description">Ez az alkalmazás értesítési engedélyre van szüksége, hogy fontos értesítéseket küldhessen Önnek.</string>
+    <string name="require_storage_permission">Tárhely engedély szükséges</string>
+    <string name="storage_permission_description">Ez az alkalmazásnak hozzá kell férnie médiafájljaihoz (hang &amp; videó) a megfelelő működéshez.</string>
+
+    <string name="settings">Beállítások</string>
+    <string name="cancel">Mégse</string>
+    <string name="privacy_policy">Adatvédelmi irányelvek</string>
+    <string name="share_app">Alkalmazás megosztása</string>
+    <string name="rate_us">Értékeljen minket</string>
+    <string name="more_apps">További alkalmazások</string>
+
+    <string name="permission">Engedély</string>
+    <string name="storage">Tárhely</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Szükségünk lesz a tárhely engedélyére a jobb élmény érdekében</string>
+    <string name="camera">Kamera</string>
+    <string name="notification_history">Értesítési előzmények</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Kamera & Fájlhozzáférés megadása]]></string>
+    <string name="give_access">Hozzáférés megadása</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Fénykép</string>
+    <string name="label_collage">Kollázs</string>
+    <string name="label_beautify">Szépítés</string>
+    <string name="hint_search">Keresés</string>
+    <string name="label_ai_group_photo">AI CSOPORTKÉP</string>
+    <string name="label_ai_single_photo">AI EGYÉNI KÉP</string>
+    <string name="cd_toggle_toolbar">Eszköztár váltása</string>
+    <string name="label_canvas">Vászon</string>
+    <string name="label_filter">Szűrő</string>
+    <string name="label_adjust">Beállítás</string>
+    <string name="label_effect">Effekt</string>
+    <string name="label_sticker">Matrica</string>
+    <string name="label_text">Szöveg</string>
+    <string name="label_remove">Eltávolítás</string>
+    <string name="label_enhance">Javítás</string>
+    <string name="label_doodle">Firkálás</string>
+    <string name="label_crop">Vágás</string>
+    <string name="label_frame">Keret</string>
+    <string name="label_rotate">Forgatás</string>
+</resources>

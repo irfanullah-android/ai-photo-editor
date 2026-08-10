@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">छोड़ें</string>
+    <string name="next">अगला</string>
+    <string name="select">चुनें</string>
+    <string name="this_action_can_contain_ads"> विज्ञापन हो सकते हैं</string>
+    <string name="get_started">शुरू करें</string>
+    <string name="ai_tools">AI टूल्स</string>
+    <string name="history">इतिहास</string>
+    <string name="effect_preview" />
+    <string name="start">शुरू</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">पल को\nतेज करें</string>
+    <string name="on_boarding_1_white_word">को</string>
+    <string name="on_boarding_1_title_2">AI से तुरंत स्पष्टता बढ़ाएं।</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">रिवाइंड\nऔर रिस्टोर</string>
+    <string name="on_boarding_2_white_word">और</string>
+    <string name="on_boarding_2_title_2">पुरानी यादों को जीवंत करें।</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">जादू जैसी\nचमक</string>
+    <string name="on_boarding_3_white_word">जैसी</string>
+    <string name="on_boarding_3_title_2">सेकंड में अपना लुक परफेक्ट करें।</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">फ्रेम में\nप्यार</string>
+    <string name="on_boarding_4_white_word">में</string>
+    <string name="on_boarding_4_title_2">पोर्ट्रेट को रोमांटिक पलों में बदलें।</string>
+
+    <string name="home">होम</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">शब्दों में शक्ति है,\nऔर ज्ञान की कोई सीमा नहीं।\nप्रेरणा को मार्गदर्शक बनने दें!</string>
+    <string name="loading">लोड हो रहा है...</string>
+    <string name="hello_blank_fragment">हैलो खाली फ्रैगमेंट</string>
+    <string name="continu">जारी रखें</string>
+    <string name="select_your_language">अपनी भाषा चुनें</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">कैमरा अनुमति आवश्यक है</string>
+    <string name="camera_permission_description">कुछ सुविधाओं के लिए आपके डिवाइस के कैमरे तक पहुंच आवश्यक है। कृपया जारी रखने के लिए कैमरा अनुमति दें।</string>
+    <string name="require_notification_permission">सूचना अनुमति आवश्यक है</string>
+    <string name="notification_permission_description">यह ऐप आपको महत्वपूर्ण अलर्ट भेजने के लिए सूचना अनुमति की आवश्यकता है।</string>
+    <string name="require_storage_permission">स्टोरेज अनुमति आवश्यक है</string>
+    <string name="storage_permission_description">यह ऐप सही तरीके से काम करने के लिए आपकी मीडिया फ़ाइलों (ऑडियो &amp; वीडियो) तक पहुंच की आवश्यकता है।</string>
+
+    <string name="settings">सेटिंग्स</string>
+    <string name="cancel">रद्द करें</string>
+    <string name="privacy_policy">गोपनीयता नीति</string>
+    <string name="share_app">ऐप शेयर करें</string>
+    <string name="rate_us">हमें रेट करें</string>
+    <string name="more_apps">और ऐप्स</string>
+
+    <string name="permission">अनुमति</string>
+    <string name="storage">स्टोरेज</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">बेहतर अनुभव के लिए हमें आपकी स्टोरेज अनुमति की आवश्यकता होगी</string>
+    <string name="camera">कैमरा</string>
+    <string name="notification_history">सूचना इतिहास</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[कैमरा और फ़ाइल एक्सेस दें]]></string>
+    <string name="give_access">एक्सेस दें</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">फ़ोटो</string>
+    <string name="label_collage">कोलाज</string>
+    <string name="label_beautify">सुंदर बनाएं</string>
+    <string name="hint_search">खोजें</string>
+    <string name="label_ai_group_photo">AI ग्रुप फोटो</string>
+    <string name="label_ai_single_photo">AI सिंगल फोटो</string>
+    <string name="cd_toggle_toolbar">टूलबार टॉगल करें</string>
+    <string name="label_canvas">कैनवास</string>
+    <string name="label_filter">फ़िल्टर</string>
+    <string name="label_adjust">समायोजित</string>
+    <string name="label_effect">प्रभाव</string>
+    <string name="label_sticker">स्टिकर</string>
+    <string name="label_text">टेक्स्ट</string>
+    <string name="label_remove">हटाएं</string>
+    <string name="label_enhance">सुधारें</string>
+    <string name="label_doodle">डूडल</string>
+    <string name="label_crop">क्रॉप</string>
+    <string name="label_frame">फ्रेम</string>
+    <string name="label_rotate">घुमाएं</string>
+</resources>

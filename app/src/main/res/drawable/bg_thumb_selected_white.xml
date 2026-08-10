@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="60dp"
+    android:height="75dp"
+    android:viewportWidth="167"
+    android:viewportHeight="196">
+
+    <!-- Rounded border frame -->
+    <path
+        android:pathData="M147.76,14H18.3C9.3,14 2,21.3 2,30.3V177.15C2,186.16 9.3,193.46 18.3,193.46H147.76C156.76,193.46 164.07,186.16 164.07,177.15V30.3C164.07,21.3 156.76,14 147.76,14Z"
+        android:fillColor="#00000000"
+        android:strokeWidth="4"
+        android:strokeColor="#ffffff" />
+
+    <!-- Top notch — rectangle ke bilkul upar center mein -->
+    <path
+        android:pathData="M81.64,0.14L57.45,11.54C57.15,11.68 56.9,11.92 56.76,12.22C56.61,12.52 56.57,12.86 56.64,13.18C56.72,13.51 56.9,13.8 57.16,14.01C57.42,14.21 57.74,14.33 58.07,14.33H106.45C106.78,14.33 107.11,14.21 107.37,14.01C107.63,13.8 107.81,13.51 107.88,13.18C107.95,12.86 107.91,12.52 107.77,12.22C107.62,11.92 107.38,11.68 107.08,11.54L82.89,0.14C82.69,0.05 82.48,0 82.26,0C82.05,0 81.83,0.05 81.64,0.14Z"
+        android:fillColor="#ffffff" />
+
+</vector>

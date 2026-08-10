@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">এআই ফটো\nএডিটর</string>
+    <string name="image">ছবি</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">এড়িয়ে যান</string>
+    <string name="next">পরবর্তী</string>
+    <string name="select">নির্বাচন করুন</string>
+    <string name="this_action_can_contain_ads"> বিজ্ঞাপন থাকতে পারে</string>
+    <string name="get_started">শুরু করুন</string>
+    <string name="ai_tools">এআই টুলস</string>
+    <string name="history">ইতিহাস</string>
+    <string name="effect_preview" />
+    <string name="start">শুরু</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">মুহূর্তটি\nস্পষ্ট করুন</string>
+    <string name="on_boarding_1_white_word">টি</string>
+    <string name="on_boarding_1_title_2">এআই এর সাথে তাৎক্ষণিকভাবে স্পষ্টতা বাড়ান।</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">রিওয়াইন্ড এবং\nপুনরুদ্ধার করুন</string>
+    <string name="on_boarding_2_white_word">এবং</string>
+    <string name="on_boarding_2_title_2">পুরানো স্মৃতি ফিরিয়ে আনুন।</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">জাদুর মতো\nউজ্জ্বলতা</string>
+    <string name="on_boarding_3_white_word">মতো</string>
+    <string name="on_boarding_3_title_2">কয়েক সেকেন্ডের মধ্যে আপনার লুক নিখুঁত করুন।</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">ফ্রেমে\nভালোবাসা</string>
+    <string name="on_boarding_4_white_word">ফ্রেমে</string>
+    <string name="on_boarding_4_title_2">পোর্ট্রেটগুলিকে রোমান্টিক মুহূর্তে রূপান্তর করুন।</string>
+
+    <string name="home">হোম</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">শব্দের ক্ষমতা আছে,\nএবং জ্ঞানের কোনো সীমা নেই।\nঅনুপ্রেরণা আপনাকে গাইড করতে দিন!</string>
+    <string name="loading">লোড হচ্ছে...</string>
+    <string name="hello_blank_fragment">হ্যালো ব্ল্যাঙ্ক ফ্র্যাগমেন্ট</string>
+    <string name="continu">চালিয়ে যান</string>
+    <string name="select_your_language">আপনার ভাষা নির্বাচন করুন</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">ক্যামেরা অনুমতির প্রয়োজন</string>
+    <string name="camera_permission_description">কিছু ফিচারের জন্য আপনার ডিভাইসের ক্যামেরা অ্যাক্সেস করা প্রয়োজন। অনুগ্রহ করে চালিয়ে যেতে ক্যামেরার অনুমতি দিন।</string>
+    <string name="require_notification_permission">নোটিফিকেশন অনুমতির প্রয়োজন</string>
+    <string name="notification_permission_description">আপনাকে গুরুত্বপূর্ণ সতর্কতা পাঠাতে এই অ্যাপটির নোটিফিকেশন অনুমতির প্রয়োজন।</string>
+    <string name="require_storage_permission">স্টোরেজ অনুমতির প্রয়োজন</string>
+    <string name="storage_permission_description">সঠিকভাবে কাজ করার জন্য এই অ্যাপটির আপনার মিডিয়া ফাইলগুলি (অডিও এবং ভিডিও) অ্যাক্সেস করা প্রয়োজন।</string>
+
+    <string name="settings">সেটিংস</string>
+    <string name="cancel">বাতিল</string>
+    <string name="privacy_policy">গোপনীয়তা নীতি</string>
+    <string name="share_app">অ্যাপ শেয়ার করুন</string>
+    <string name="rate_us">আমাদের রেট দিন</string>
+    <string name="more_apps">আরও অ্যাপস</string>
+
+    <string name="permission">অনুমতি</string>
+    <string name="storage">স্টোরেজ</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">আপনাকে আরও ভালো অভিজ্ঞতা দিতে আমাদের আপনার স্টোরেজ অনুমতির প্রয়োজন হবে</string>
+    <string name="camera">ক্যামেরা</string>
+    <string name="notification_history">নোটিফিকেশন ইতিহাস</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[ক্যামেরা এবং ফাইল অ্যাক্সেস মঞ্জুর করুন]]></string>
+    <string name="give_access">অ্যাক্সেস দিন</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">ছবি</string>
+    <string name="label_collage">কোলাজ</string>
+    <string name="label_beautify">সুন্দর করুন</string>
+    <string name="hint_search">অনুসন্ধান</string>
+    <string name="label_ai_group_photo">এআই গ্রুপ ফটো</string>
+    <string name="label_ai_single_photo">এআই সিঙ্গেল ফটো</string>
+    <string name="cd_toggle_toolbar">টুলবার টগল করুন</string>
+    <!-- Small Icons -->
+    <string name="label_canvas">ক্যানভাস</string>
+    <string name="label_filter">ফিল্টার</string>
+    <string name="label_adjust">সামঞ্জস্য</string>
+    <string name="label_effect">এফেক্ট</string>
+    <string name="label_sticker">স্টিকার</string>
+    <string name="label_text">টেক্সট</string>
+    <string name="label_remove">সরান</string>
+    <string name="label_enhance">উন্নত করুন</string>
+    <string name="label_doodle">ডুডল</string>
+    <string name="label_crop">ক্রপ</string>
+    <string name="label_frame">ফ্রেম</string>
+    <string name="label_rotate">ঘোরান</string>
+</resources>

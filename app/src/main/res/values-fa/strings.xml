@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">رد کردن</string>
+    <string name="next">بعدی</string>
+    <string name="select">انتخاب</string>
+    <string name="this_action_can_contain_ads"> شامل تبلیغات است</string>
+    <string name="get_started">شروع کنید</string>
+    <string name="ai_tools">ابزارهای هوش مصنوعی</string>
+    <string name="history">تاریخچه</string>
+    <string name="effect_preview" />
+    <string name="start">شروع</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">لحظه را\nتیزتر کنید</string>
+    <string name="on_boarding_1_white_word">را</string>
+    <string name="on_boarding_1_title_2">وضوح را فوراً با هوش مصنوعی افزایش دهید.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">برگشت\nو بازیابی</string>
+    <string name="on_boarding_2_white_word">و</string>
+    <string name="on_boarding_2_title_2">خاطرات قدیمی را دوباره زنده کنید.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">مثل جادو\nبدرخشید</string>
+    <string name="on_boarding_3_white_word">مثل</string>
+    <string name="on_boarding_3_title_2">در چند ثانیه ظاهر خود را کامل کنید.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">عشق در\nقاب‌ها</string>
+    <string name="on_boarding_4_white_word">در</string>
+    <string name="on_boarding_4_title_2">پرتره‌ها را به لحظات عاشقانه تبدیل کنید.</string>
+
+    <string name="home">خانه</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">کلمات قدرت دارند،\nو حکمت حد و مرزی ندارد.\nبگذار الهام راهنمای شما باشد!</string>
+    <string name="loading">در حال بارگذاری...</string>
+    <string name="hello_blank_fragment">سلام fragment خالی</string>
+    <string name="continu">ادامه</string>
+    <string name="select_your_language">زبان خود را انتخاب کنید</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">دسترسی به دوربین مورد نیاز است</string>
+    <string name="camera_permission_description">برخی ویژگی‌ها به دسترسی به دوربین دستگاه شما نیاز دارند. لطفاً برای ادامه مجوز دوربین را بدهید.</string>
+    <string name="require_notification_permission">دسترسی به اعلان‌ها مورد نیاز است</string>
+    <string name="notification_permission_description">این برنامه به مجوز اعلان نیاز دارد تا هشدارهای مهم را برای شما ارسال کند.</string>
+    <string name="require_storage_permission">دسترسی به حافظه مورد نیاز است</string>
+    <string name="storage_permission_description">این برنامه برای عملکرد صحیح به دسترسی به فایل‌های رسانه‌ای شما (صوت و تصویر) نیاز دارد.</string>
+
+    <string name="settings">تنظیمات</string>
+    <string name="cancel">لغو</string>
+    <string name="privacy_policy">سیاست حریم خصوصی</string>
+    <string name="share_app">اشتراک‌گذاری برنامه</string>
+    <string name="rate_us">به ما امتیاز دهید</string>
+    <string name="more_apps">برنامه‌های بیشتر</string>
+
+    <string name="permission">مجوز</string>
+    <string name="storage">حافظه</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">برای ارائه تجربه بهتر به مجوز حافظه شما نیاز داریم</string>
+    <string name="camera">دوربین</string>
+    <string name="notification_history">تاریخچه اعلان‌ها</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[دسترسی به دوربین و فایل‌ها را بدهید]]></string>
+    <string name="give_access">دسترسی دهید</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">عکس</string>
+    <string name="label_collage">کلاژ</string>
+    <string name="label_beautify">زیباسازی</string>
+    <string name="hint_search">جستجو</string>
+    <string name="label_ai_group_photo">عکس گروهی هوش مصنوعی</string>
+    <string name="label_ai_single_photo">عکس انفرادی هوش مصنوعی</string>
+    <string name="cd_toggle_toolbar">تغییر نوار ابزار</string>
+    <string name="label_canvas">بوم</string>
+    <string name="label_filter">فیلتر</string>
+    <string name="label_adjust">تنظیم</string>
+    <string name="label_effect">افکت</string>
+    <string name="label_sticker">استیکر</string>
+    <string name="label_text">متن</string>
+    <string name="label_remove">حذف</string>
+    <string name="label_enhance">بهبود</string>
+    <string name="label_doodle">نقاشی</string>
+    <string name="label_crop">برش</string>
+    <string name="label_frame">قاب</string>
+    <string name="label_rotate">چرخش</string>
+</resources>

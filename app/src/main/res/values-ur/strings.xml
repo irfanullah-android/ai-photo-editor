@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">چھوڑیں</string>
+    <string name="next">اگلا</string>
+    <string name="select">منتخب کریں</string>
+    <string name="this_action_can_contain_ads"> اشتہارات ہو سکتے ہیں</string>
+    <string name="get_started">شروع کریں</string>
+    <string name="ai_tools">AI ٹولز</string>
+    <string name="history">تاریخ</string>
+    <string name="effect_preview" />
+    <string name="start">شروع</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">لمحے کو\nتیز کریں</string>
+    <string name="on_boarding_1_white_word">کو</string>
+    <string name="on_boarding_1_title_2">AI کے ساتھ فوری وضاحت بڑھائیں۔</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">پیچھے جائیں\nاور بحال کریں</string>
+    <string name="on_boarding_2_white_word">اور</string>
+    <string name="on_boarding_2_title_2">پرانی یادوں کو دوبارہ زندہ کریں۔</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">جادو کی طرح\nچمکیں</string>
+    <string name="on_boarding_3_white_word">کی طرح</string>
+    <string name="on_boarding_3_title_2">چند سیکنڈ میں اپنا لک پرفیکٹ کریں۔</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">فریم میں\nمحبت</string>
+    <string name="on_boarding_4_white_word">میں</string>
+    <string name="on_boarding_4_title_2">پورٹریٹ کو رومانوی لمحوں میں بدلیں۔</string>
+
+    <string name="home">ہوم</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">الفاظ میں طاقت ہے،\nاور حکمت کی کوئی حد نہیں۔\nالہام کو رہنما بننے دیں!</string>
+    <string name="loading">لوڈ ہو رہا ہے...</string>
+    <string name="hello_blank_fragment">ہیلو خالی فریگمنٹ</string>
+    <string name="continu">جاری رکھیں</string>
+    <string name="select_your_language">اپنی زبان منتخب کریں</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">کیمرہ اجازت درکار ہے</string>
+    <string name="camera_permission_description">کچھ فیچرز کے لیے آپ کے ڈیوائس کے کیمرے تک رسائی درکار ہے۔ جاری رکھنے کے لیے کیمرہ اجازت دیں۔</string>
+    <string name="require_notification_permission">اطلاع اجازت درکار ہے</string>
+    <string name="notification_permission_description">یہ ایپ آپ کو اہم الرٹ بھیجنے کے لیے اطلاع اجازت کی ضرورت ہے۔</string>
+    <string name="require_storage_permission">اسٹوریج اجازت درکار ہے</string>
+    <string name="storage_permission_description">یہ ایپ صحیح طریقے سے کام کرنے کے لیے آپ کی میڈیا فائلوں (آڈیو &amp; ویڈیو) تک رسائی کی ضرورت ہے۔</string>
+
+    <string name="settings">ترتیبات</string>
+    <string name="cancel">منسوخ</string>
+    <string name="privacy_policy">رازداری کی پالیسی</string>
+    <string name="share_app">ایپ شیئر کریں</string>
+    <string name="rate_us">ہمیں ریٹ کریں</string>
+    <string name="more_apps">مزید ایپس</string>
+
+    <string name="permission">اجازت</string>
+    <string name="storage">اسٹوریج</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">بہتر تجربے کے لیے ہمیں آپ کی اسٹوریج اجازت کی ضرورت ہوگی</string>
+    <string name="camera">کیمرہ</string>
+    <string name="notification_history">اطلاع کی تاریخ</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[کیمرہ اور فائل رسائی دیں]]></string>
+    <string name="give_access">رسائی دیں</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">تصویر</string>
+    <string name="label_collage">کولاج</string>
+    <string name="label_beautify">خوبصورت بنائیں</string>
+    <string name="hint_search">تلاش کریں</string>
+    <string name="label_ai_group_photo">AI گروپ فوٹو</string>
+    <string name="label_ai_single_photo">AI سنگل فوٹو</string>
+    <string name="cd_toggle_toolbar">ٹول بار ٹوگل کریں</string>
+    <string name="label_canvas">کینوس</string>
+    <string name="label_filter">فلٹر</string>
+    <string name="label_adjust">ایڈجسٹ</string>
+    <string name="label_effect">اثر</string>
+    <string name="label_sticker">اسٹیکر</string>
+    <string name="label_text">متن</string>
+    <string name="label_remove">ہٹائیں</string>
+    <string name="label_enhance">بہتر بنائیں</string>
+    <string name="label_doodle">ڈوڈل</string>
+    <string name="label_crop">کراپ</string>
+    <string name="label_frame">فریم</string>
+    <string name="label_rotate">گھمائیں</string>
+</resources>

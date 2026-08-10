@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Note: These two strings were originally marked translatable="false" -->
+    <string name="app_name">محرر الصور\nبالذكاء الاصطناعي</string>
+    <string name="image">صورة</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">تخطي</string>
+    <string name="next">التالي</string>
+    <string name="select">تحديد</string>
+    <string name="this_action_can_contain_ads"> يحتوي على إعلانات</string>
+    <string name="get_started">البدء</string>
+    <string name="ai_tools">أدوات الذكاء الاصطناعي</string>
+    <string name="history">السجل</string>
+    <string name="effect_preview" />
+    <string name="start">ابدأ</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">شحذ\nاللحظة</string>
+    <string name="on_boarding_1_white_word">الـ</string>
+    <string name="on_boarding_1_title_2">عزز الوضوح فوراً باستخدام الذكاء الاصطناعي.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">إرجاع و\nاستعادة</string>
+    <string name="on_boarding_2_white_word">و</string>
+    <string name="on_boarding_2_title_2">أعِد ذكرياتك القديمة إلى الحياة.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">توهج مثل\nالسحر</string>
+    <string name="on_boarding_3_white_word">مثل</string>
+    <string name="on_boarding_3_title_2">حسّن مظهرك في ثوانٍ.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">الحب في\nإطارات</string>
+    <string name="on_boarding_4_white_word">في</string>
+    <string name="on_boarding_4_title_2">حوّل الصور الشخصية إلى لحظات رومانسية.</string>
+
+    <string name="home">الرئيسية</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">الكلمات لها قوة،\nوالحكمة ليس لها حدود.\nدع الإلهام يرشدك!</string>
+    <string name="loading">جاري التحميل...</string>
+    <string name="hello_blank_fragment">مرحباً بـ blank fragment</string>
+    <string name="continu">متابعة</string>
+    <string name="select_your_language">اختر لغتك</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">مطلوب إذن الكاميرا</string>
+    <string name="camera_permission_description">تتطلب بعض الميزات الوصول إلى كاميرا جهازك. يرجى السماح بإذن الكاميرا للمتابعة.</string>
+    <string name="require_notification_permission">مطلوب إذن الإشعارات</string>
+    <string name="notification_permission_description">يحتاج هذا التطبيق إلى إذن الإشعارات لإرسال تنبيهات مهمة إليك.</string>
+    <string name="require_storage_permission">مطلوب إذن الوصول إلى وحدة التخزين</string>
+    <string name="storage_permission_description">يحتاج هذا التطبيق إلى الوصول إلى ملفات الوسائط الخاصة بك (الصوت والفيديو) ليعمل بشكل صحيح.</string>
+
+    <string name="settings">الإعدادات</string>
+    <string name="cancel">إلغاء</string>
+    <string name="privacy_policy">سياسة الخصوصية</string>
+    <string name="share_app">مشاركة التطبيق</string>
+    <string name="rate_us">قيمنا</string>
+    <string name="more_apps">المزيد من التطبيقات</string>
+
+    <string name="permission">الإذن</string>
+    <string name="storage">وحدة التخزين</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">سنحتاج إلى إذن الوصول إلى وحدة التخزين لتقديم تجربة أفضل لك</string>
+    <string name="camera">الكاميرا</string>
+    <string name="notification_history">سجل الإشعارات</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[منح الوصول إلى الكاميرا والملفات]]></string>
+    <string name="give_access">منح الوصول</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">صورة</string>
+    <string name="label_collage">تجميعة صور</string>
+    <string name="label_beautify">تجميل</string>
+    <string name="hint_search">بحث</string>
+    <string name="label_ai_group_photo">صورة جماعية بالذكاء الاصطناعي</string>
+    <string name="label_ai_single_photo">صورة فردية بالذكاء الاصطناعي</string>
+    <string name="cd_toggle_toolbar">تبديل شريط الأدوات</string>
+    <!-- Small Icons -->
+    <string name="label_canvas">لوحة</string>
+    <string name="label_filter">فلتر</string>
+    <string name="label_adjust">ضبط</string>
+    <string name="label_effect">تأثير</string>
+    <string name="label_sticker">ملصق</string>
+    <string name="label_text">نص</string>
+    <string name="label_remove">إزالة</string>
+    <string name="label_enhance">تحسين</string>
+    <string name="label_doodle">رسم</string>
+    <string name="label_crop">اقتصاص</string>
+    <string name="label_frame">إطار</string>
+    <string name="label_rotate">تدوير</string>
+</resources>

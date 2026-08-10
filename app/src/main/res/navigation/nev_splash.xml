@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nev_splash.xml"
+    app:startDestination="@id/splashFragment">
+
+
+    <fragment
+        android:id="@+id/splashFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.splashfragments.SplashFragment"
+        android:label="SplashFragment"
+        tools:layout="@layout/fragment_splash">
+        <action
+            android:id="@+id/action_splashFragment_to_languageFragment"
+            app:destination="@id/languageFragment" />
+        <action
+            android:id="@+id/action_splashFragment_to_onBoardingFragment"
+            app:destination="@id/onBoardingFragment" />
+
+        <action
+            android:id="@+id/action_splashFragment_to_permissionFragment"
+            app:destination="@id/permissionFragment" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/languageFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.splashfragments.LanguageFragment"
+        android:label="fragment_language"
+        tools:layout="@layout/fragment_language" >
+        <action
+            android:id="@+id/action_languageFragment_to_onBoardingFragment"
+            app:destination="@id/onBoardingFragment" />
+        <action
+            android:id="@+id/action_languageFragment_to_permissionFragment"
+            app:destination="@id/permissionFragment" />
+
+
+    </fragment>
+    <fragment
+        android:id="@+id/onBoardingFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.splashfragments.OnboardingFragment"
+        android:label="fragment_language"
+        tools:layout="@layout/fragment_onboarding" >
+        <action
+            android:id="@+id/action_onBoardingFragment_to_permissionFragment"
+            app:destination="@id/permissionFragment" />
+
+
+    </fragment>
+    <fragment
+        android:id="@+id/permissionFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.splashfragments.PermissionFragment"
+        android:label="fragment_permission"
+        tools:layout="@layout/fragment_permission" />
+
+
+</navigation>

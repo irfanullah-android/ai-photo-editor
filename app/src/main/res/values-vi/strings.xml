@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Bỏ qua</string>
+    <string name="next">Tiếp theo</string>
+    <string name="select">Chọn</string>
+    <string name="this_action_can_contain_ads"> Có thể chứa quảng cáo</string>
+    <string name="get_started">BẮT ĐẦU</string>
+    <string name="ai_tools">Công cụ AI</string>
+    <string name="history">Lịch sử</string>
+    <string name="effect_preview" />
+    <string name="start">Bắt đầu</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Làm sắc nét\nKhoảnh khắc</string>
+    <string name="on_boarding_1_white_word">Khoảnh khắc</string>
+    <string name="on_boarding_1_title_2">Tăng độ rõ nét ngay lập tức với AI.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Tua lại\n&amp; Khôi phục</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Hồi sinh những ký ức cũ.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Tỏa sáng như\nPhép màu</string>
+    <string name="on_boarding_3_white_word">như</string>
+    <string name="on_boarding_3_title_2">Hoàn thiện vẻ ngoài của bạn trong vài giây.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Tình yêu trong\nKhung ảnh</string>
+    <string name="on_boarding_4_white_word">trong</string>
+    <string name="on_boarding_4_title_2">Biến chân dung thành những khoảnh khắc lãng mạn.</string>
+
+    <string name="home">Trang chủ</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Ngôn từ có sức mạnh,\nvà trí tuệ không có giới hạn.\nHãy để cảm hứng dẫn đường!</string>
+    <string name="loading">Đang tải...</string>
+    <string name="hello_blank_fragment">Xin chào fragment trống</string>
+    <string name="continu">Tiếp tục</string>
+    <string name="select_your_language">Chọn ngôn ngữ của bạn</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Cần quyền truy cập máy ảnh</string>
+    <string name="camera_permission_description">Một số tính năng yêu cầu quyền truy cập máy ảnh của thiết bị. Vui lòng cho phép quyền truy cập máy ảnh để tiếp tục.</string>
+    <string name="require_notification_permission">Cần quyền thông báo</string>
+    <string name="notification_permission_description">Ứng dụng này cần quyền thông báo để gửi cảnh báo quan trọng cho bạn.</string>
+    <string name="require_storage_permission">Cần quyền truy cập bộ nhớ</string>
+    <string name="storage_permission_description">Ứng dụng này cần truy cập tệp phương tiện của bạn (âm thanh &amp; video) để hoạt động đúng cách.</string>
+
+    <string name="settings">Cài đặt</string>
+    <string name="cancel">Hủy</string>
+    <string name="privacy_policy">Chính sách quyền riêng tư</string>
+    <string name="share_app">Chia sẻ ứng dụng</string>
+    <string name="rate_us">Đánh giá chúng tôi</string>
+    <string name="more_apps">Thêm ứng dụng</string>
+
+    <string name="permission">Quyền</string>
+    <string name="storage">Bộ nhớ</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Chúng tôi cần quyền truy cập bộ nhớ để mang lại trải nghiệm tốt hơn</string>
+    <string name="camera">Máy ảnh</string>
+    <string name="notification_history">Lịch sử thông báo</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Cấp quyền truy cập máy ảnh & tệp]]></string>
+    <string name="give_access">Cấp quyền truy cập</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Ảnh</string>
+    <string name="label_collage">Ghép ảnh</string>
+    <string name="label_beautify">Làm đẹp</string>
+    <string name="hint_search">Tìm kiếm</string>
+    <string name="label_ai_group_photo">ẢNH NHÓM AI</string>
+    <string name="label_ai_single_photo">ẢNH ĐƠN AI</string>
+    <string name="cd_toggle_toolbar">Chuyển đổi thanh công cụ</string>
+    <string name="label_canvas">Canvas</string>
+    <string name="label_filter">Bộ lọc</string>
+    <string name="label_adjust">Điều chỉnh</string>
+    <string name="label_effect">Hiệu ứng</string>
+    <string name="label_sticker">Nhãn dán</string>
+    <string name="label_text">Văn bản</string>
+    <string name="label_remove">Xóa</string>
+    <string name="label_enhance">Nâng cao</string>
+    <string name="label_doodle">Vẽ nguệch ngoạc</string>
+    <string name="label_crop">Cắt</string>
+    <string name="label_frame">Khung</string>
+    <string name="label_rotate">Xoay</string>
+</resources>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Überspringen</string>
+    <string name="next">Weiter</string>
+    <string name="select">Auswählen</string>
+    <string name="this_action_can_contain_ads"> Enthält Werbung</string>
+    <string name="get_started">LOSLEGEN</string>
+    <string name="ai_tools">KI-Werkzeuge</string>
+    <string name="history">Verlauf</string>
+    <string name="effect_preview" />
+    <string name="start">Starten</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Den Moment\nSchärfen</string>
+    <string name="on_boarding_1_white_word">Den</string>
+    <string name="on_boarding_1_title_2">Verbessere die Klarheit sofort mit KI.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Zurückspulen\n&amp; Wiederherstellen</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Bringe alte Erinnerungen zum Leben.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Strahlen wie\nMagie</string>
+    <string name="on_boarding_3_white_word">wie</string>
+    <string name="on_boarding_3_title_2">Perfektioniere dein Aussehen in Sekunden.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Liebe in\nRahmen</string>
+    <string name="on_boarding_4_white_word">in</string>
+    <string name="on_boarding_4_title_2">Verwandle Porträts in romantische Momente.</string>
+
+    <string name="home">Startseite</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Worte haben Kraft,\nund Weisheit kennt keine Grenzen.\nLass dich von Inspiration leiten!</string>
+    <string name="loading">Wird geladen...</string>
+    <string name="hello_blank_fragment">Hallo leeres Fragment</string>
+    <string name="continu">Weiter</string>
+    <string name="select_your_language">Wähle deine Sprache</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Kameraberechtigung erforderlich</string>
+    <string name="camera_permission_description">Einige Funktionen benötigen Zugriff auf die Kamera deines Geräts. Bitte erlaube die Kameraberechtigung, um fortzufahren.</string>
+    <string name="require_notification_permission">Benachrichtigungsberechtigung erforderlich</string>
+    <string name="notification_permission_description">Diese App benötigt die Benachrichtigungsberechtigung, um dir wichtige Benachrichtigungen zu senden.</string>
+    <string name="require_storage_permission">Speicherberechtigung erforderlich</string>
+    <string name="storage_permission_description">Diese App benötigt Zugriff auf deine Mediendateien (Audio &amp; Video), um ordnungsgemäß zu funktionieren.</string>
+
+    <string name="settings">Einstellungen</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="privacy_policy">Datenschutzrichtlinie</string>
+    <string name="share_app">App teilen</string>
+    <string name="rate_us">Bewerte uns</string>
+    <string name="more_apps">Weitere Apps</string>
+
+    <string name="permission">Berechtigung</string>
+    <string name="storage">Speicher</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Wir benötigen deine Speicherberechtigung für ein besseres Erlebnis</string>
+    <string name="camera">Kamera</string>
+    <string name="notification_history">Benachrichtigungsverlauf</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Kamera- & Dateizugriff gewähren]]></string>
+    <string name="give_access">Zugriff gewähren</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Foto</string>
+    <string name="label_collage">Collage</string>
+    <string name="label_beautify">Verschönern</string>
+    <string name="hint_search">Suchen</string>
+    <string name="label_ai_group_photo">KI-GRUPPENFOTO</string>
+    <string name="label_ai_single_photo">KI-EINZELFOTO</string>
+    <string name="cd_toggle_toolbar">Symbolleiste umschalten</string>
+    <string name="label_canvas">Leinwand</string>
+    <string name="label_filter">Filter</string>
+    <string name="label_adjust">Anpassen</string>
+    <string name="label_effect">Effekt</string>
+    <string name="label_sticker">Aufkleber</string>
+    <string name="label_text">Text</string>
+    <string name="label_remove">Entfernen</string>
+    <string name="label_enhance">Verbessern</string>
+    <string name="label_doodle">Kritzeln</string>
+    <string name="label_crop">Zuschneiden</string>
+    <string name="label_frame">Rahmen</string>
+    <string name="label_rotate">Drehen</string>
+</resources>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Hoppa över</string>
+    <string name="next">Nästa</string>
+    <string name="select">Välj</string>
+    <string name="this_action_can_contain_ads"> Innehåller annonser</string>
+    <string name="get_started">KOM IGÅNG</string>
+    <string name="ai_tools">AI-verktyg</string>
+    <string name="history">Historik</string>
+    <string name="effect_preview" />
+    <string name="start">Starta</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Skärp\nOgonblicket</string>
+    <string name="on_boarding_1_white_word">Ögonblicket</string>
+    <string name="on_boarding_1_title_2">Förbättra skärpan direkt med AI.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Spola tillbaka\n&amp; Återställ</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Ge gamla minnen nytt liv.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Lysa som\nMagi</string>
+    <string name="on_boarding_3_white_word">som</string>
+    <string name="on_boarding_3_title_2">Perfekta ditt utseende på sekunder.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Kärlek i\nRamar</string>
+    <string name="on_boarding_4_white_word">i</string>
+    <string name="on_boarding_4_title_2">Förvandla porträtt till romantiska stunder.</string>
+
+    <string name="home">Hem</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Ord har kraft,\noch visdom har inga gränser.\nLåt inspiration vägleda dig!</string>
+    <string name="loading">Laddar...</string>
+    <string name="hello_blank_fragment">Hej tomt fragment</string>
+    <string name="continu">Fortsätt</string>
+    <string name="select_your_language">Välj ditt språk</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Kamerabehörighet krävs</string>
+    <string name="camera_permission_description">Vissa funktioner kräver åtkomst till enhetens kamera. Tillåt kamerabehörighet för att fortsätta.</string>
+    <string name="require_notification_permission">Aviseringsbehörighet krävs</string>
+    <string name="notification_permission_description">Denna app behöver aviseringsbehörighet för att skicka viktiga aviseringar till dig.</string>
+    <string name="require_storage_permission">Lagringsbehörighet krävs</string>
+    <string name="storage_permission_description">Denna app behöver åtkomst till dina mediafiler (ljud &amp; video) för att fungera korrekt.</string>
+
+    <string name="settings">Inställningar</string>
+    <string name="cancel">Avbryt</string>
+    <string name="privacy_policy">Integritetspolicy</string>
+    <string name="share_app">Dela app</string>
+    <string name="rate_us">Betygsätt oss</string>
+    <string name="more_apps">Fler appar</string>
+
+    <string name="permission">Behörighet</string>
+    <string name="storage">Lagring</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Vi behöver din lagringsbehörighet för en bättre upplevelse</string>
+    <string name="camera">Kamera</string>
+    <string name="notification_history">Aviseringshistorik</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Ge åtkomst till kamera & filer]]></string>
+    <string name="give_access">Ge åtkomst</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Foto</string>
+    <string name="label_collage">Kollage</string>
+    <string name="label_beautify">Försköna</string>
+    <string name="hint_search">Sök</string>
+    <string name="label_ai_group_photo">AI GRUPPFOTO</string>
+    <string name="label_ai_single_photo">AI ENSKILT FOTO</string>
+    <string name="cd_toggle_toolbar">Växla verktygsfält</string>
+    <string name="label_canvas">Duk</string>
+    <string name="label_filter">Filter</string>
+    <string name="label_adjust">Justera</string>
+    <string name="label_effect">Effekt</string>
+    <string name="label_sticker">Klistermärke</string>
+    <string name="label_text">Text</string>
+    <string name="label_remove">Ta bort</string>
+    <string name="label_enhance">Förbättra</string>
+    <string name="label_doodle">Klotter</string>
+    <string name="label_crop">Beskär</string>
+    <string name="label_frame">Ram</string>
+    <string name="label_rotate">Rotera</string>
+</resources>

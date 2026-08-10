@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Пропустити</string>
+    <string name="next">Далі</string>
+    <string name="select">Вибрати</string>
+    <string name="this_action_can_contain_ads"> Містить рекламу</string>
+    <string name="get_started">ПОЧАТИ</string>
+    <string name="ai_tools">Інструменти ШІ</string>
+    <string name="history">Історія</string>
+    <string name="effect_preview" />
+    <string name="start">Почати</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Загостріть\nМомент</string>
+    <string name="on_boarding_1_white_word">Момент</string>
+    <string name="on_boarding_1_title_2">Миттєво покращте чіткість за допомогою ШІ.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Перемотати\n&amp; Відновити</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Поверніть старі спогади до життя.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Сяйте як\nМагія</string>
+    <string name="on_boarding_3_white_word">як</string>
+    <string name="on_boarding_3_title_2">Вдосконалте свій образ за секунди.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Кохання в\nРамках</string>
+    <string name="on_boarding_4_white_word">в</string>
+    <string name="on_boarding_4_title_2">Перетворіть портрети на романтичні моменти.</string>
+
+    <string name="home">Головна</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Слова мають силу,\nа мудрість не має меж.\nНехай натхнення веде вас!</string>
+    <string name="loading">Завантаження...</string>
+    <string name="hello_blank_fragment">Привіт порожній фрагмент</string>
+    <string name="continu">Продовжити</string>
+    <string name="select_your_language">Виберіть мову</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Потрібен дозвіл камери</string>
+    <string name="camera_permission_description">Деякі функції потребують доступу до камери пристрою. Будь ласка, дозвольте доступ до камери для продовження.</string>
+    <string name="require_notification_permission">Потрібен дозвіл на сповіщення</string>
+    <string name="notification_permission_description">Цьому додатку потрібен дозвіл на сповіщення для надсилання важливих попереджень.</string>
+    <string name="require_storage_permission">Потрібен дозвіл на сховище</string>
+    <string name="storage_permission_description">Цьому додатку потрібен доступ до ваших медіафайлів (аудіо &amp; відео) для коректної роботи.</string>
+
+    <string name="settings">Налаштування</string>
+    <string name="cancel">Скасувати</string>
+    <string name="privacy_policy">Політика конфіденційності</string>
+    <string name="share_app">Поділитися додатком</string>
+    <string name="rate_us">Оцінити нас</string>
+    <string name="more_apps">Інші додатки</string>
+
+    <string name="permission">Дозвіл</string>
+    <string name="storage">Сховище</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Нам знадобиться дозвіл на сховище для кращого досвіду</string>
+    <string name="camera">Камера</string>
+    <string name="notification_history">Історія сповіщень</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Надати доступ до камери та файлів]]></string>
+    <string name="give_access">Надати доступ</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Фото</string>
+    <string name="label_collage">Колаж</string>
+    <string name="label_beautify">Прикрасити</string>
+    <string name="hint_search">Пошук</string>
+    <string name="label_ai_group_photo">ГРУПОВЕ ФОТО ШІ</string>
+    <string name="label_ai_single_photo">ОДИНОЧНЕ ФОТО ШІ</string>
+    <string name="cd_toggle_toolbar">Перемкнути панель інструментів</string>
+    <string name="label_canvas">Полотно</string>
+    <string name="label_filter">Фільтр</string>
+    <string name="label_adjust">Налаштування</string>
+    <string name="label_effect">Ефект</string>
+    <string name="label_sticker">Стікер</string>
+    <string name="label_text">Текст</string>
+    <string name="label_remove">Видалити</string>
+    <string name="label_enhance">Покращити</string>
+    <string name="label_doodle">Малюнок</string>
+    <string name="label_crop">Обрізати</string>
+    <string name="label_frame">Рамка</string>
+    <string name="label_rotate">Повернути</string>
+</resources>

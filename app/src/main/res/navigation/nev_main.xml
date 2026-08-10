@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nev_main"
+    app:startDestination="@id/mainFragment">
+
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.mainfragment.MainFragment"
+        android:label="Main"
+        tools:layout="@layout/fragment_main">
+        <action
+            android:id="@+id/action_mainFragment_to_aiGroupPhotoFragment"
+            app:destination="@id/aiGroupPhotoFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/SelectImageFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.childfragments.SelectImageFragment"
+        android:label="Select Image">
+        <action
+            android:id="@+id/action_selectImageFragment_to_folderListFragment"
+            app:destination="@id/folderListFragment" />
+        <action
+            android:id="@+id/action_selectImageFragment_to_collageFragment"
+            app:destination="@id/collageFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/folderListFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.childfragments.FolderListFragment"
+        android:label="Select an Album"
+        tools:layout="@layout/fragment_folder_list" />
+
+    <fragment
+        android:id="@+id/photoStudioFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.childfragments.PhotoStudioFragment"
+        android:label="Photo Studio" />
+
+    <fragment
+        android:id="@+id/collageFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.childfragments.CollageFragment"
+        android:label="Create Collage" />
+
+    <fragment
+        android:id="@+id/DiscoverFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.homefragments.DiscoverFragment"
+        android:label="Creation"
+        tools:layout="@layout/fragment_discover">
+        <action
+            android:id="@+id/action_discoverFragment_to_aiGroupPhotoFragment"
+            app:destination="@id/aiGroupPhotoFragment" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/aiGroupPhotoFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.childfragments.AiGroupPhotoFragment"
+        android:label="AI Group Photo"
+        tools:layout="@layout/fragment_ai_group_photo">
+        <action
+            android:id="@+id/action_aiGroupPhotoFragment_to_resultFragment"
+            app:destination="@id/aiGroupPhotoResultFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/aiGroupPhotoResultFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.childfragments.AiGroupPhotoResultFragment"
+        android:label="AI Group Photo Result"
+        tools:layout="@layout/fragment_ai_group_photo_result" />
+
+    <fragment
+        android:id="@+id/aiSinglePhotoFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.childfragments.AiSinglePhotoFragment"
+        android:label="AiSinglePhotoFragment" />
+
+    <fragment
+        android:id="@+id/generationImageFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.childfragments.GenerationImageFragment"
+        android:label="Generation Image"
+        tools:layout="@layout/fragment_generation_image" />
+
+    <fragment
+        android:id="@+id/singleGenerationFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.childfragments.SingleGenerationFragment"
+        android:label="SingleGenerationFragment" />
+
+    <fragment
+        android:id="@+id/aiSinglePhotoResultFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.childfragments.AiSinglePhotoResultFragment"
+        android:label="AiSinglePhotoResultFragment" />
+
+    <fragment
+        android:id="@+id/customGalleryFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.childfragments.CustomGalleryFragment"
+        android:label="CustomGalleryFragment"
+        tools:layout="@layout/fragment_custom_gallery" />
+
+    <fragment
+        android:id="@+id/languageFragment"
+        android:name="com.editor.photo.video.collagemaker.photoedit.fragments.splashfragments.LanguageFragment"
+        android:label="Language"
+        tools:layout="@layout/fragment_language" />
+
+
+
+</navigation>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">건너뛰기</string>
+    <string name="next">다음</string>
+    <string name="select">선택</string>
+    <string name="this_action_can_contain_ads"> 광고 포함</string>
+    <string name="get_started">시작하기</string>
+    <string name="ai_tools">AI 도구</string>
+    <string name="history">기록</string>
+    <string name="effect_preview" />
+    <string name="start">시작</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">순간을\n선명하게</string>
+    <string name="on_boarding_1_white_word">을</string>
+    <string name="on_boarding_1_title_2">AI로 즉시 선명도를 높이세요.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">되감기\n&amp; 복원</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">오래된 추억을 되살리세요.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">마법처럼\n빛나세요</string>
+    <string name="on_boarding_3_white_word">처럼</string>
+    <string name="on_boarding_3_title_2">몇 초 만에 완벽한 모습을 만드세요.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">프레임 속의\n사랑</string>
+    <string name="on_boarding_4_white_word">속의</string>
+    <string name="on_boarding_4_title_2">인물 사진을 로맨틱한 순간으로 바꾸세요.</string>
+
+    <string name="home">홈</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">말에는 힘이 있고,\n지혜에는 한계가 없습니다.\n영감이 당신을 이끌게 하세요!</string>
+    <string name="loading">로딩 중...</string>
+    <string name="hello_blank_fragment">안녕 빈 프래그먼트</string>
+    <string name="continu">계속</string>
+    <string name="select_your_language">언어를 선택하세요</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">카메라 권한이 필요합니다</string>
+    <string name="camera_permission_description">일부 기능은 기기 카메라에 대한 액세스가 필요합니다. 계속하려면 카메라 권한을 허용해 주세요.</string>
+    <string name="require_notification_permission">알림 권한이 필요합니다</string>
+    <string name="notification_permission_description">이 앱은 중요한 알림을 보내기 위해 알림 권한이 필요합니다.</string>
+    <string name="require_storage_permission">저장소 권한이 필요합니다</string>
+    <string name="storage_permission_description">이 앱은 올바르게 작동하기 위해 미디어 파일(오디오 &amp; 비디오)에 액세스해야 합니다.</string>
+
+    <string name="settings">설정</string>
+    <string name="cancel">취소</string>
+    <string name="privacy_policy">개인정보 처리방침</string>
+    <string name="share_app">앱 공유</string>
+    <string name="rate_us">평가하기</string>
+    <string name="more_apps">더 많은 앱</string>
+
+    <string name="permission">권한</string>
+    <string name="storage">저장소</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">더 나은 경험을 위해 저장소 권한이 필요합니다</string>
+    <string name="camera">카메라</string>
+    <string name="notification_history">알림 기록</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[카메라 & 파일 액세스 허용]]></string>
+    <string name="give_access">액세스 허용</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">사진</string>
+    <string name="label_collage">콜라주</string>
+    <string name="label_beautify">미화</string>
+    <string name="hint_search">검색</string>
+    <string name="label_ai_group_photo">AI 그룹 사진</string>
+    <string name="label_ai_single_photo">AI 개인 사진</string>
+    <string name="cd_toggle_toolbar">도구 모음 전환</string>
+    <string name="label_canvas">캔버스</string>
+    <string name="label_filter">필터</string>
+    <string name="label_adjust">조정</string>
+    <string name="label_effect">효과</string>
+    <string name="label_sticker">스티커</string>
+    <string name="label_text">텍스트</string>
+    <string name="label_remove">제거</string>
+    <string name="label_enhance">향상</string>
+    <string name="label_doodle">낙서</string>
+    <string name="label_crop">자르기</string>
+    <string name="label_frame">프레임</string>
+    <string name="label_rotate">회전</string>
+</resources>

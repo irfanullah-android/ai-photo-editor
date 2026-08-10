@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/drawable/bg_gradient_purple_white.xml
+     Bottom-to-top: deep purple at bottom fading to near-white at top -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:startColor="#8160F7"
+        android:centerColor="@color/theme_purple"
+        android:endColor="#CEA0FB"
+        android:angle="270"
+        android:type="linear" />
+</shape>

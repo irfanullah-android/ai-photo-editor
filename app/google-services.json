@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "513531904803",
+    "project_id": "fotonova-photo-editor",
+    "storage_bucket": "fotonova-photo-editor.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:513531904803:android:7639e369b25c4de0b48296",
+        "android_client_info": {
+          "package_name": "com.editor.photo.video.collagemaker.photoedit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnSKCsbJzsHAHNu_H3o4aLjgxV1LPRBk4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

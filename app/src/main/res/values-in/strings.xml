@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Lewati</string>
+    <string name="next">Berikutnya</string>
+    <string name="select">Pilih</string>
+    <string name="this_action_can_contain_ads"> Mengandung Iklan</string>
+    <string name="get_started">MULAI</string>
+    <string name="ai_tools">Alat AI</string>
+    <string name="history">Riwayat</string>
+    <string name="effect_preview" />
+    <string name="start">Mulai</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Tajamkan\nMomennya</string>
+    <string name="on_boarding_1_white_word">Momentnya</string>
+    <string name="on_boarding_1_title_2">Tingkatkan kejernihan secara instan dengan AI.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Putar Balik\n&amp; Pulihkan</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Hidupkan kembali kenangan lama.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Bersinar\nSeperti Sihir</string>
+    <string name="on_boarding_3_white_word">Seperti</string>
+    <string name="on_boarding_3_title_2">Sempurnakan penampilan Anda dalam hitungan detik.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Cinta dalam\nBingkai</string>
+    <string name="on_boarding_4_white_word">dalam</string>
+    <string name="on_boarding_4_title_2">Ubah potret menjadi momen romantis.</string>
+
+    <string name="home">Beranda</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Kata-kata memiliki kekuatan,\ndan kebijaksanaan tidak mengenal batas.\nBiarkan inspirasi memandu Anda!</string>
+    <string name="loading">Memuat...</string>
+    <string name="hello_blank_fragment">Halo fragmen kosong</string>
+    <string name="continu">Lanjutkan</string>
+    <string name="select_your_language">Pilih Bahasa Anda</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Izin Kamera Diperlukan</string>
+    <string name="camera_permission_description">Beberapa fitur memerlukan akses ke kamera perangkat Anda. Harap izinkan izin kamera untuk melanjutkan.</string>
+    <string name="require_notification_permission">Izin Notifikasi Diperlukan</string>
+    <string name="notification_permission_description">Aplikasi ini memerlukan izin notifikasi untuk mengirimkan peringatan penting kepada Anda.</string>
+    <string name="require_storage_permission">Izin Penyimpanan Diperlukan</string>
+    <string name="storage_permission_description">Aplikasi ini memerlukan akses ke file media Anda (audio &amp; video) agar berfungsi dengan baik.</string>
+
+    <string name="settings">Pengaturan</string>
+    <string name="cancel">Batal</string>
+    <string name="privacy_policy">Kebijakan Privasi</string>
+    <string name="share_app">Bagikan Aplikasi</string>
+    <string name="rate_us">Beri Nilai Kami</string>
+    <string name="more_apps">Aplikasi Lainnya</string>
+
+    <string name="permission">Izin</string>
+    <string name="storage">Penyimpanan</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Kami memerlukan izin penyimpanan Anda untuk memberikan pengalaman yang lebih baik</string>
+    <string name="camera">Kamera</string>
+    <string name="notification_history">Riwayat Notifikasi</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Berikan Akses Kamera & File]]></string>
+    <string name="give_access">Berikan Akses</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Foto</string>
+    <string name="label_collage">Kolase</string>
+    <string name="label_beautify">Percantik</string>
+    <string name="hint_search">Cari</string>
+    <string name="label_ai_group_photo">FOTO GRUP AI</string>
+    <string name="label_ai_single_photo">FOTO TUNGGAL AI</string>
+    <string name="cd_toggle_toolbar">Alihkan bilah alat</string>
+    <string name="label_canvas">Kanvas</string>
+    <string name="label_filter">Filter</string>
+    <string name="label_adjust">Sesuaikan</string>
+    <string name="label_effect">Efek</string>
+    <string name="label_sticker">Stiker</string>
+    <string name="label_text">Teks</string>
+    <string name="label_remove">Hapus</string>
+    <string name="label_enhance">Tingkatkan</string>
+    <string name="label_doodle">Coret</string>
+    <string name="label_crop">Potong</string>
+    <string name="label_frame">Bingkai</string>
+    <string name="label_rotate">Putar</string>
+</resources>

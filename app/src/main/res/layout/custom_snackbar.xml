@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:background="@drawable/shape_rounded"
+    android:alpha="0.7"
+    android:paddingVertical="@dimen/_8sdp"
+    android:layout_marginHorizontal="@dimen/_10sdp"
+    android:elevation="6dp">
+
+    <TextView
+        android:id="@+id/snackBarText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Massage"
+        android:textColor="@color/white"
+        android:textSize="@dimen/_12sdp"
+        android:textStyle="bold"
+        tools:ignore="HardcodedText,TextSizeCheck,TextContrastCheck" />
+</LinearLayout>

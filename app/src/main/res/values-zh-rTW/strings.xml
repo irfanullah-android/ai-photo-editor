@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">跳過</string>
+    <string name="next">下一步</string>
+    <string name="select">選擇</string>
+    <string name="this_action_can_contain_ads"> 含有廣告</string>
+    <string name="get_started">開始使用</string>
+    <string name="ai_tools">AI工具</string>
+    <string name="history">歷史</string>
+    <string name="effect_preview" />
+    <string name="start">開始</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">銳化\n瞬間</string>
+    <string name="on_boarding_1_white_word">瞬間</string>
+    <string name="on_boarding_1_title_2">用AI即時提升清晰度。</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">回放\n&amp; 恢復</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">讓舊記憶重煥生機。</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">如魔法般\n閃耀</string>
+    <string name="on_boarding_3_white_word">般</string>
+    <string name="on_boarding_3_title_2">幾秒內完美呈現您的外觀。</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">相框中的\n愛</string>
+    <string name="on_boarding_4_white_word">中的</string>
+    <string name="on_boarding_4_title_2">將人像照片變成浪漫時刻。</string>
+
+    <string name="home">首頁</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">言語有力量，\n智慧無邊界。\n讓靈感引導您！</string>
+    <string name="loading">載入中...</string>
+    <string name="hello_blank_fragment">你好空白片段</string>
+    <string name="continu">繼續</string>
+    <string name="select_your_language">選擇您的語言</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">需要相機權限</string>
+    <string name="camera_permission_description">某些功能需要存取您裝置的相機。請允許相機權限以繼續。</string>
+    <string name="require_notification_permission">需要通知權限</string>
+    <string name="notification_permission_description">此應用需要通知權限向您發送重要提醒。</string>
+    <string name="require_storage_permission">需要儲存權限</string>
+    <string name="storage_permission_description">此應用需要存取您的媒體檔案（音訊 &amp; 視訊）才能正常運行。</string>
+
+    <string name="settings">設定</string>
+    <string name="cancel">取消</string>
+    <string name="privacy_policy">隱私政策</string>
+    <string name="share_app">分享應用程式</string>
+    <string name="rate_us">評價我們</string>
+    <string name="more_apps">更多應用程式</string>
+
+    <string name="permission">權限</string>
+    <string name="storage">儲存</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">我們需要您的儲存權限以提供更好的體驗</string>
+    <string name="camera">相機</string>
+    <string name="notification_history">通知歷史</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[授予相機和檔案存取權限]]></string>
+    <string name="give_access">授予存取權限</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">照片</string>
+    <string name="label_collage">拼貼</string>
+    <string name="label_beautify">美化</string>
+    <string name="hint_search">搜尋</string>
+    <string name="label_ai_group_photo">AI集體照</string>
+    <string name="label_ai_single_photo">AI單人照</string>
+    <string name="cd_toggle_toolbar">切換工具列</string>
+    <string name="label_canvas">畫布</string>
+    <string name="label_filter">濾鏡</string>
+    <string name="label_adjust">調整</string>
+    <string name="label_effect">效果</string>
+    <string name="label_sticker">貼紙</string>
+    <string name="label_text">文字</string>
+    <string name="label_remove">刪除</string>
+    <string name="label_enhance">增強</string>
+    <string name="label_doodle">塗鴉</string>
+    <string name="label_crop">裁剪</string>
+    <string name="label_frame">相框</string>
+    <string name="label_rotate">旋轉</string>
+</resources>

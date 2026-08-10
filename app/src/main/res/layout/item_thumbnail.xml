@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <FrameLayout
+        android:layout_width="60dp"
+        android:layout_height="80dp"
+        android:layout_marginEnd="6dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <!-- Image — notch ke neeche, fixed size -->
+        <ImageView
+            android:id="@+id/viewThumb"
+            android:layout_width="60dp"
+            android:layout_height="72dp"
+            android:layout_gravity="bottom|center_horizontal"
+            android:scaleType="fitXY"
+            android:adjustViewBounds="false"
+            android:background="@drawable/bg_thumb_normal" />
+
+        <!-- Selected frame — same bottom area + notch upar -->
+        <ImageView
+            android:id="@+id/viewSelectedFrame"
+            android:layout_width="60dp"
+            android:layout_height="80dp"
+            android:layout_gravity="top|center_horizontal"
+            android:src="@drawable/bg_thumb_selected_white"
+            android:scaleType="fitXY"
+            android:visibility="visible" />
+
+    </FrameLayout>
+
+</layout>

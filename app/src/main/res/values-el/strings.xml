@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Παράλειψη</string>
+    <string name="next">Επόμενο</string>
+    <string name="select">Επιλογή</string>
+    <string name="this_action_can_contain_ads"> Περιέχει διαφημίσεις</string>
+    <string name="get_started">ΞΕΚΙΝΗΣΤΕ</string>
+    <string name="ai_tools">Εργαλεία ΑΙ</string>
+    <string name="history">Ιστορικό</string>
+    <string name="effect_preview" />
+    <string name="start">Έναρξη</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Οξύνετε\nΤη Στιγμή</string>
+    <string name="on_boarding_1_white_word">Τη</string>
+    <string name="on_boarding_1_title_2">Βελτιώστε την ευκρίνεια άμεσα με ΑΙ.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Επαναφορά\n&amp; Ανάκτηση</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Ζωντανέψτε τις παλιές αναμνήσεις.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Λάμψτε σαν\nΜαγεία</string>
+    <string name="on_boarding_3_white_word">σαν</string>
+    <string name="on_boarding_3_title_2">Τελειοποιήστε την εμφάνισή σας σε δευτερόλεπτα.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Αγάπη σε\nΠλαίσια</string>
+    <string name="on_boarding_4_white_word">σε</string>
+    <string name="on_boarding_4_title_2">Μετατρέψτε πορτρέτα σε ρομαντικές στιγμές.</string>
+
+    <string name="home">Αρχική</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Οι λέξεις έχουν δύναμη,\nκαι η σοφία δεν έχει όρια.\nΑφήστε την έμπνευση να σας οδηγεί!</string>
+    <string name="loading">Φόρτωση...</string>
+    <string name="hello_blank_fragment">Γεια άδειο fragment</string>
+    <string name="continu">Συνέχεια</string>
+    <string name="select_your_language">Επιλέξτε τη γλώσσα σας</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Απαιτείται άδεια κάμερας</string>
+    <string name="camera_permission_description">Ορισμένες λειτουργίες απαιτούν πρόσβαση στην κάμερα της συσκευής σας. Παρακαλώ επιτρέψτε την άδεια κάμερας για να συνεχίσετε.</string>
+    <string name="require_notification_permission">Απαιτείται άδεια ειδοποιήσεων</string>
+    <string name="notification_permission_description">Αυτή η εφαρμογή χρειάζεται άδεια ειδοποιήσεων για να σας στέλνει σημαντικές ειδοποιήσεις.</string>
+    <string name="require_storage_permission">Απαιτείται άδεια αποθήκευσης</string>
+    <string name="storage_permission_description">Αυτή η εφαρμογή χρειάζεται πρόσβαση στα αρχεία πολυμέσων σας (ήχος &amp; βίντεο) για να λειτουργεί σωστά.</string>
+
+    <string name="settings">Ρυθμίσεις</string>
+    <string name="cancel">Ακύρωση</string>
+    <string name="privacy_policy">Πολιτική Απορρήτου</string>
+    <string name="share_app">Κοινοποίηση εφαρμογής</string>
+    <string name="rate_us">Αξιολογήστε μας</string>
+    <string name="more_apps">Περισσότερες εφαρμογές</string>
+
+    <string name="permission">Άδεια</string>
+    <string name="storage">Αποθήκευση</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Θα χρειαστούμε την άδεια αποθήκευσής σας για καλύτερη εμπειρία</string>
+    <string name="camera">Κάμερα</string>
+    <string name="notification_history">Ιστορικό ειδοποιήσεων</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Παροχή πρόσβασης σε κάμερα & αρχεία]]></string>
+    <string name="give_access">Παροχή πρόσβασης</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Φωτογραφία</string>
+    <string name="label_collage">Κολάζ</string>
+    <string name="label_beautify">Ομορφαίνω</string>
+    <string name="hint_search">Αναζήτηση</string>
+    <string name="label_ai_group_photo">ΟΜΑΔΙΚΗ ΦΩΤΟ ΑΙ</string>
+    <string name="label_ai_single_photo">ΜΟΝΗ ΦΩΤΟ ΑΙ</string>
+    <string name="cd_toggle_toolbar">Εναλλαγή γραμμής εργαλείων</string>
+    <string name="label_canvas">Καμβάς</string>
+    <string name="label_filter">Φίλτρο</string>
+    <string name="label_adjust">Ρύθμιση</string>
+    <string name="label_effect">Εφέ</string>
+    <string name="label_sticker">Αυτοκόλλητο</string>
+    <string name="label_text">Κείμενο</string>
+    <string name="label_remove">Αφαίρεση</string>
+    <string name="label_enhance">Βελτίωση</string>
+    <string name="label_doodle">Σκίτσο</string>
+    <string name="label_crop">Περικοπή</string>
+    <string name="label_frame">Πλαίσιο</string>
+    <string name="label_rotate">Περιστροφή</string>
+</resources>

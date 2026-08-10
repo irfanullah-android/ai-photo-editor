@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="80dp"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="8dp"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <!-- Effect Preview -->
+    <ImageView
+        android:id="@+id/ivEffectPreview"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:background="@drawable/bg_effect_selector"
+        android:clipToOutline="true"
+        android:scaleType="centerCrop" />
+
+    <!-- Selected Indicator -->
+    <View
+        android:id="@+id/vSelected"
+        android:layout_width="64dp"
+        android:layout_height="3dp"
+        android:background="@color/colorAccent"
+        android:visibility="gone" />
+
+    <!-- Effect Name -->
+    <TextView
+        android:id="@+id/tvEffectName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Effect"
+        android:singleLine="true"
+        android:textColor="@android:color/white"
+        android:textSize="12sp" />
+
+</LinearLayout>

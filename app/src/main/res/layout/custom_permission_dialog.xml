@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_margin="@dimen/_2sdp"
+    android:padding="@dimen/_5sdp"
+    android:background="@drawable/bg_exit_dialog">
+
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottieTitle"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:gravity="center"
+        app:lottie_rawRes="@raw/notification_permission_lottie"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        android:layout_centerHorizontal="true" />
+
+    <View
+        android:id="@+id/divider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/light_gray"
+        android:layout_below="@id/lottieTitle" />
+
+    <TextView
+        android:id="@+id/dialogNickName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/require_camera_permission"
+        android:textSize="18sp"
+        android:gravity="center"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        android:layout_below="@id/divider"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="8dp"/>
+
+    <TextView
+        android:id="@+id/dialogUserId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/camera_permission_description"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:textColor="@color/dark_gray"
+        android:layout_below="@id/dialogNickName"
+        android:layout_marginTop="12dp"
+        android:layout_marginStart="8dp"/>
+
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_below="@id/dialogUserId"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp"
+        android:padding="@dimen/_5sdp"
+        android:weightSum="2">
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/dialogCancel"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="40dp"
+            android:text="@string/cancel"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:background="@drawable/button_bg"
+            android:backgroundTint="#FEF3F7"
+            android:textColor="@color/black"
+            android:layout_marginEnd="5dp"/>
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/dialogSettingButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="40dp"
+            android:text="@string/settings"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:background="@drawable/button_bg"
+            android:textColor="@android:color/white"
+            android:layout_marginStart="5dp"/>
+
+    </LinearLayout>
+
+</RelativeLayout>

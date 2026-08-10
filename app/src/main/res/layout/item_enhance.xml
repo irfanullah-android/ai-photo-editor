@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="8dp">
+
+    <!-- Enhance Preview Image -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardEnhance"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="#2A2A2A">
+
+        <ImageView
+            android:id="@+id/ivEnhancePreview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop" />
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Enhance Name -->
+    <TextView
+        android:id="@+id/tvEnhanceName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Sharpness"
+        android:textColor="@android:color/white"
+        android:textSize="11sp"
+        android:textAlignment="center"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+</LinearLayout>

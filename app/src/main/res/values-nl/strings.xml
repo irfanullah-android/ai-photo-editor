@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Overslaan</string>
+    <string name="next">Volgende</string>
+    <string name="select">Selecteren</string>
+    <string name="this_action_can_contain_ads"> Bevat advertenties</string>
+    <string name="get_started">BEGINNEN</string>
+    <string name="ai_tools">AI-tools</string>
+    <string name="history">Geschiedenis</string>
+    <string name="effect_preview" />
+    <string name="start">Starten</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Verscherp\nHet Moment</string>
+    <string name="on_boarding_1_white_word">Het</string>
+    <string name="on_boarding_1_title_2">Verbeter de helderheid direct met AI.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Terugspoelen\n&amp; Herstellen</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Breng oude herinneringen tot leven.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Straal als\nMagie</string>
+    <string name="on_boarding_3_white_word">als</string>
+    <string name="on_boarding_3_title_2">Perfectioneer je look in seconden.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Liefde in\nLijsten</string>
+    <string name="on_boarding_4_white_word">in</string>
+    <string name="on_boarding_4_title_2">Verander portretten in romantische momenten.</string>
+
+    <string name="home">Startpagina</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Woorden hebben kracht,\nen wijsheid kent geen grenzen.\nLaat inspiratie je leiden!</string>
+    <string name="loading">Laden...</string>
+    <string name="hello_blank_fragment">Hallo leeg fragment</string>
+    <string name="continu">Doorgaan</string>
+    <string name="select_your_language">Selecteer uw taal</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Cameramachtiging vereist</string>
+    <string name="camera_permission_description">Sommige functies vereisen toegang tot de camera van uw apparaat. Sta de cameramachtiging toe om door te gaan.</string>
+    <string name="require_notification_permission">Meldingsmachtiging vereist</string>
+    <string name="notification_permission_description">Deze app heeft meldingsmachtiging nodig om u belangrijke waarschuwingen te sturen.</string>
+    <string name="require_storage_permission">Opslagmachtiging vereist</string>
+    <string name="storage_permission_description">Deze app heeft toegang nodig tot uw mediabestanden (audio &amp; video) om correct te functioneren.</string>
+
+    <string name="settings">Instellingen</string>
+    <string name="cancel">Annuleren</string>
+    <string name="privacy_policy">Privacybeleid</string>
+    <string name="share_app">App delen</string>
+    <string name="rate_us">Beoordeel ons</string>
+    <string name="more_apps">Meer apps</string>
+
+    <string name="permission">Machtiging</string>
+    <string name="storage">Opslag</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">We hebben uw opslagmachtiging nodig voor een betere ervaring</string>
+    <string name="camera">Camera</string>
+    <string name="notification_history">Meldingsgeschiedenis</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Camera- & bestandstoegang verlenen]]></string>
+    <string name="give_access">Toegang verlenen</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Foto</string>
+    <string name="label_collage">Collage</string>
+    <string name="label_beautify">Verfraaien</string>
+    <string name="hint_search">Zoeken</string>
+    <string name="label_ai_group_photo">AI GROEPSFOTO</string>
+    <string name="label_ai_single_photo">AI ENKELVOUDIGE FOTO</string>
+    <string name="cd_toggle_toolbar">Werkbalk in-/uitschakelen</string>
+    <string name="label_canvas">Canvas</string>
+    <string name="label_filter">Filter</string>
+    <string name="label_adjust">Aanpassen</string>
+    <string name="label_effect">Effect</string>
+    <string name="label_sticker">Sticker</string>
+    <string name="label_text">Tekst</string>
+    <string name="label_remove">Verwijderen</string>
+    <string name="label_enhance">Verbeteren</string>
+    <string name="label_doodle">Krabbelen</string>
+    <string name="label_crop">Bijsnijden</string>
+    <string name="label_frame">Kader</string>
+    <string name="label_rotate">Draaien</string>
+</resources>

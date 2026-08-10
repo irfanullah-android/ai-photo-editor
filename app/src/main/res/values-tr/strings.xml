@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">AI PHOTO\nEDITOR</string>
+    <string name="image" translatable="false">Image</string>
+    <item name="tag_immersive_applied" type="id" />
+
+    <!-- splash screen -->
+    <string name="skip">Atla</string>
+    <string name="next">İleri</string>
+    <string name="select">Seç</string>
+    <string name="this_action_can_contain_ads"> Reklam içerebilir</string>
+    <string name="get_started">BAŞLA</string>
+    <string name="ai_tools">AI Araçları</string>
+    <string name="history">Geçmiş</string>
+    <string name="effect_preview" />
+    <string name="start">Başlat</string>
+
+    <!-- Page 1 -->
+    <string name="on_boarding_1_title_1">Anı\nNetleştir</string>
+    <string name="on_boarding_1_white_word">Anı</string>
+    <string name="on_boarding_1_title_2">AI ile netliği anında artırın.</string>
+
+    <!-- Page 2 -->
+    <string name="on_boarding_2_title_1">Geri Sar\n&amp; Geri Yükle</string>
+    <string name="on_boarding_2_white_word">&amp;</string>
+    <string name="on_boarding_2_title_2">Eski anıları hayata döndürün.</string>
+
+    <!-- Page 3 -->
+    <string name="on_boarding_3_title_1">Sihir Gibi\nParla</string>
+    <string name="on_boarding_3_white_word">Gibi</string>
+    <string name="on_boarding_3_title_2">Görünüşünüzü saniyeler içinde mükemmelleştirin.</string>
+
+    <!-- Page 4 -->
+    <string name="on_boarding_4_title_1">Çerçevelerde\nAşk</string>
+    <string name="on_boarding_4_white_word">Çerçevelerde</string>
+    <string name="on_boarding_4_title_2">Portreleri romantik anlara dönüştürün.</string>
+
+    <string name="home">Ana Sayfa</string>
+    <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Kelimelerin gücü var,\nve bilgeliğin sınırı yok.\nİlhamın sizi yönlendirmesine izin verin!</string>
+    <string name="loading">Yükleniyor...</string>
+    <string name="hello_blank_fragment">Merhaba boş fragment</string>
+    <string name="continu">Devam Et</string>
+    <string name="select_your_language">Dilinizi Seçin</string>
+
+    <!-- permission dialog -->
+    <string name="require_camera_permission">Kamera İzni Gerekli</string>
+    <string name="camera_permission_description">Bazı özellikler cihazınızın kamerasına erişim gerektirir. Devam etmek için kamera iznine izin verin.</string>
+    <string name="require_notification_permission">Bildirim İzni Gerekli</string>
+    <string name="notification_permission_description">Bu uygulama size önemli uyarılar göndermek için bildirim iznine ihtiyaç duyar.</string>
+    <string name="require_storage_permission">Depolama İzni Gerekli</string>
+    <string name="storage_permission_description">Bu uygulamanın düzgün çalışması için medya dosyalarınıza (ses &amp; video) erişim gerekir.</string>
+
+    <string name="settings">Ayarlar</string>
+    <string name="cancel">İptal</string>
+    <string name="privacy_policy">Gizlilik Politikası</string>
+    <string name="share_app">Uygulamayı Paylaş</string>
+    <string name="rate_us">Bizi Değerlendirin</string>
+    <string name="more_apps">Daha Fazla Uygulama</string>
+
+    <string name="permission">İzin</string>
+    <string name="storage">Depolama</string>
+    <string name="we_will_need_your_storage_permission_to_give_you_better_experience">Daha iyi bir deneyim sunmak için depolama izninize ihtiyacımız olacak</string>
+    <string name="camera">Kamera</string>
+    <string name="notification_history">Bildirim Geçmişi</string>
+    <string name="grant_camera_amp_files_access"><![CDATA[Kamera ve Dosya Erişimi Ver]]></string>
+    <string name="give_access">Erişim Ver</string>
+
+    <!-- Home Fragment -->
+    <string name="label_photo">Fotoğraf</string>
+    <string name="label_collage">Kolaj</string>
+    <string name="label_beautify">Güzelleştir</string>
+    <string name="hint_search">Ara</string>
+    <string name="label_ai_group_photo">AI GRUP FOTOĞRAFI</string>
+    <string name="label_ai_single_photo">AI TEK FOTOĞRAF</string>
+    <string name="cd_toggle_toolbar">Araç çubuğunu değiştir</string>
+    <string name="label_canvas">Tuval</string>
+    <string name="label_filter">Filtre</string>
+    <string name="label_adjust">Ayarla</string>
+    <string name="label_effect">Efekt</string>
+    <string name="label_sticker">Çıkartma</string>
+    <string name="label_text">Metin</string>
+    <string name="label_remove">Kaldır</string>
+    <string name="label_enhance">Geliştir</string>
+    <string name="label_doodle">Karalama</string>
+    <string name="label_crop">Kırp</string>
+    <string name="label_frame">Çerçeve</string>
+    <string name="label_rotate">Döndür</string>
+</resources>
