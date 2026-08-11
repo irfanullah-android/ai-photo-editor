@@ -36,9 +36,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
     private var photoEditorRef: WeakReference<PhotoEditor>? = null
     private var onDoodleApplied: (() -> Unit)? = null
 
-    // Called with ONE fully-formed DoodlePath per completed stroke (on touch-up).
-    // This is the app's real source of truth - the PhotoEditor drawing surface below
-    // remains only a temporary interactive preview while the finger is down.
     private var onStrokeCompleted: ((DoodlePath) -> Unit)? = null
 
     private var currentColor: Int = Color.RED

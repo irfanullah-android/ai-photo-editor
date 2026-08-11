@@ -6,8 +6,6 @@
     android:background="#191919"
     android:orientation="vertical">
 
-
-    <!-- Top intensity / text size slider alone -->
     <LinearLayout
         android:id="@+id/intensityContainer"
         android:layout_width="match_parent"
@@ -30,7 +28,6 @@
             android:thumbTint="@android:color/white" />
     </LinearLayout>
 
-    <!-- Tools bar with + Add Text capsule at start followed by rvTools -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="54dp"
@@ -65,7 +62,6 @@
             android:paddingEnd="4dp" />
     </LinearLayout>
 
-    <!-- Selected tool ka panel yahan swap hota hai -->
     <FrameLayout
         android:id="@+id/toolContentContainer"
         android:layout_width="match_parent"

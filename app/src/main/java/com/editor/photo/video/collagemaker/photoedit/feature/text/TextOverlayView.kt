@@ -3,6 +3,7 @@ package com.editor.photo.video.collagemaker.photoedit.feature.text
 import android.content.Context
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
@@ -48,20 +49,35 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
         textSize = 24f
     }
 
-    private val handleSize = dp(28)
+    private val hotspotSize = dp(HOTSPOT_DP)
+    private val iconSize = dp(ICON_DP)
+
     private val ivEdit = handleImageView(R.drawable.ic_edit_handle)
     private val ivDelete = handleImageView(R.drawable.ic_cross)
     private val ivRotate = handleImageView(R.drawable.ic_rotate)
     private val ivResize = handleImageView(R.drawable.ic_resize_handle)
 
+    private val hotspotEdit = handleHotspot(ivEdit)
+    private val hotspotDelete = handleHotspot(ivDelete)
+    private val hotspotRotate = handleHotspot(ivRotate)
+    private val hotspotResize = handleHotspot(ivResize)
+
     var scaleFactor: Float = 1f
         private set
 
-    private var dragging = false
-    private var startRawX = 0f
-    private var startRawY = 0f
-    private var startTranslationX = 0f
-    private var startTranslationY = 0f
+    private enum class BodyMode { NONE, DRAG, TRANSFORM }
+
+    private var bodyMode = BodyMode.NONE
+    private var dragPointerId = MotionEvent.INVALID_POINTER_ID
+    private var lastDragRawX = 0f
+    private var lastDragRawY = 0f
+
+    private var pinchPointerId1 = MotionEvent.INVALID_POINTER_ID
+    private var pinchPointerId2 = MotionEvent.INVALID_POINTER_ID
+    private var lastPinchDistance = 0f
+    private var lastPinchAngle = 0f
+    private var lastPinchMidX = 0f
+    private var lastPinchMidY = 0f
 
     private var baseTextSizePx: Float = 48f
     private var baseStrokeWidthPx: Float = 4f
@@ -72,7 +88,7 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
         clipChildren = false
         clipToPadding = false
 
-        val margin = handleSize / 2
+        val margin = hotspotSize / 2
         val boxParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER).apply {
             setMargins(margin, margin, margin, margin)
         }
@@ -81,30 +97,48 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
         boxContainer.addView(contentText, textParams)
         addView(boxContainer, boxParams)
 
-        addHandle(ivEdit, Gravity.TOP or Gravity.START)
-        addHandle(ivDelete, Gravity.TOP or Gravity.END)
-        addHandle(ivRotate, Gravity.BOTTOM or Gravity.START)
-        addHandle(ivResize, Gravity.BOTTOM or Gravity.END)
+        addHandle(hotspotEdit, Gravity.TOP or Gravity.START)
+        addHandle(hotspotDelete, Gravity.TOP or Gravity.END)
+        addHandle(hotspotRotate, Gravity.BOTTOM or Gravity.START)
+        addHandle(hotspotResize, Gravity.BOTTOM or Gravity.END)
 
-        contentText.setOnTouchListener { _, event -> handleBodyTouch(event) }
-        strokeText.setOnTouchListener { _, event -> handleBodyTouch(event) }
-        boxContainer.setOnTouchListener { _, event -> handleBodyTouch(event) }
+        hotspotDelete.setOnClickListener { listener?.onDeleteRequested() }
+        hotspotEdit.setOnClickListener { listener?.onEditRequested() }
+        hotspotRotate.setOnTouchListener { _, event -> handleRotateTouch(event) }
+        hotspotResize.setOnTouchListener { _, event -> handleResizeTouch(event) }
+    }
 
-        ivDelete.setOnClickListener { listener?.onDeleteRequested() }
-        ivEdit.setOnClickListener { listener?.onEditRequested() }
-        ivRotate.setOnTouchListener { _, event -> handleRotateTouch(event) }
-        ivResize.setOnTouchListener { _, event -> handleResizeTouch(event) }
+    private fun handleImageView(iconRes: Int): ImageView {
+        return ImageView(context).apply {
+            setImageResource(iconRes)
+            background = context.getDrawable(R.drawable.bg_handle_circle)
+            setPadding(dp(4), dp(4), dp(4), dp(4))
+        }
+    }
+
+    private fun handleHotspot(icon: ImageView): FrameLayout {
+        return FrameLayout(context).apply {
+            isClickable = true
+            isFocusable = true
+            val iconParams = LayoutParams(iconSize, iconSize, Gravity.CENTER)
+            addView(icon, iconParams)
+        }
+    }
+
+    private fun addHandle(hotspot: FrameLayout, gravity: Int) {
+        val params = LayoutParams(hotspotSize, hotspotSize, gravity)
+        addView(hotspot, params)
     }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
         if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
             val x = ev.x.toInt()
             val y = ev.y.toInt()
-            val handles = listOf(ivEdit, ivDelete, ivRotate, ivResize)
-            for (handle in handles) {
-                if (handle.visibility == View.VISIBLE) {
-                    val rect = android.graphics.Rect()
-                    handle.getHitRect(rect)
+            val hotspots = listOf(hotspotEdit, hotspotDelete, hotspotRotate, hotspotResize)
+            val rect = Rect()
+            for (hotspot in hotspots) {
+                if (hotspot.visibility == View.VISIBLE) {
+                    hotspot.getHitRect(rect)
                     if (rect.contains(x, y)) {
                         return false
                     }
@@ -119,66 +153,161 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
         return handleBodyTouch(event)
     }
 
-    private fun handleImageView(iconRes: Int): ImageView {
-        return ImageView(context).apply {
-            setImageResource(iconRes)
-            background = context.getDrawable(R.drawable.bg_handle_circle)
-            setPadding(dp(4), dp(4), dp(4), dp(4))
-        }
+    private fun rawXAt(event: MotionEvent, pointerIndex: Int): Float {
+        return event.getX(pointerIndex) + (event.rawX - event.x)
     }
 
-    private fun addHandle(view: ImageView, gravity: Int) {
-        val params = LayoutParams(handleSize, handleSize, gravity)
-        addView(view, params)
+    private fun rawYAt(event: MotionEvent, pointerIndex: Int): Float {
+        return event.getY(pointerIndex) + (event.rawY - event.y)
+    }
+
+    private fun angleDelta(from: Float, to: Float): Float {
+        var delta = (to - from) % 360f
+        if (delta > 180f) delta -= 360f
+        if (delta < -180f) delta += 360f
+        return delta
     }
 
     private fun handleBodyTouch(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                dragging = true
-                startRawX = event.rawX
-                startRawY = event.rawY
-                startTranslationX = translationX
-                startTranslationY = translationY
+                bodyMode = BodyMode.DRAG
+                dragPointerId = event.getPointerId(0)
+                lastDragRawX = rawXAt(event, 0)
+                lastDragRawY = rawYAt(event, 0)
                 parent?.requestDisallowInterceptTouchEvent(true)
                 listener?.onTransformChanged()
                 return true
             }
-            MotionEvent.ACTION_MOVE -> {
-                if (!dragging) return false
-                parent?.requestDisallowInterceptTouchEvent(true)
-                translationX = startTranslationX + (event.rawX - startRawX)
-                translationY = startTranslationY + (event.rawY - startRawY)
-                listener?.onTransformChanged()
-                return true
-            }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                if (dragging) {
-                    dragging = false
-                    listener?.onTransformCommitted()
+
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                val newIndex = event.actionIndex
+                val existingId = if (dragPointerId != MotionEvent.INVALID_POINTER_ID) {
+                    dragPointerId
+                } else {
+                    event.getPointerId(if (newIndex == 0) 1 else 0)
                 }
+                val newId = event.getPointerId(newIndex)
+                if (existingId == newId) return true
+
+                pinchPointerId1 = existingId
+                pinchPointerId2 = newId
+                bodyMode = BodyMode.TRANSFORM
+
+                val i1 = event.findPointerIndex(pinchPointerId1)
+                val i2 = event.findPointerIndex(pinchPointerId2)
+                if (i1 == -1 || i2 == -1) return true
+
+                val x1 = rawXAt(event, i1); val y1 = rawYAt(event, i1)
+                val x2 = rawXAt(event, i2); val y2 = rawYAt(event, i2)
+
+                lastPinchDistance = hypot((x2 - x1).toDouble(), (y2 - y1).toDouble()).toFloat().coerceAtLeast(1f)
+                lastPinchAngle = Math.toDegrees(atan2((y2 - y1).toDouble(), (x2 - x1).toDouble())).toFloat()
+                lastPinchMidX = (x1 + x2) / 2f
+                lastPinchMidY = (y1 + y2) / 2f
+
+                parent?.requestDisallowInterceptTouchEvent(true)
+                return true
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                when (bodyMode) {
+                    BodyMode.DRAG -> {
+                        val index = event.findPointerIndex(dragPointerId)
+                        if (index == -1) return true
+                        val currentX = rawXAt(event, index)
+                        val currentY = rawYAt(event, index)
+                        translationX += (currentX - lastDragRawX)
+                        translationY += (currentY - lastDragRawY)
+                        lastDragRawX = currentX
+                        lastDragRawY = currentY
+                        listener?.onTransformChanged()
+                        return true
+                    }
+
+                    BodyMode.TRANSFORM -> {
+                        val i1 = event.findPointerIndex(pinchPointerId1)
+                        val i2 = event.findPointerIndex(pinchPointerId2)
+                        if (i1 == -1 || i2 == -1) return true
+
+                        val x1 = rawXAt(event, i1); val y1 = rawYAt(event, i1)
+                        val x2 = rawXAt(event, i2); val y2 = rawYAt(event, i2)
+
+                        val currentDistance = hypot((x2 - x1).toDouble(), (y2 - y1).toDouble()).toFloat().coerceAtLeast(1f)
+                        val currentAngle = Math.toDegrees(atan2((y2 - y1).toDouble(), (x2 - x1).toDouble())).toFloat()
+                        val currentMidX = (x1 + x2) / 2f
+                        val currentMidY = (y1 + y2) / 2f
+
+                        val distanceRatio = currentDistance / lastPinchDistance
+                        scaleFactor = (scaleFactor * distanceRatio).coerceIn(0.2f, 6f)
+                        applyScaleToContent()
+
+                        rotation += angleDelta(lastPinchAngle, currentAngle)
+
+                        translationX += (currentMidX - lastPinchMidX)
+                        translationY += (currentMidY - lastPinchMidY)
+
+                        lastPinchDistance = currentDistance
+                        lastPinchAngle = currentAngle
+                        lastPinchMidX = currentMidX
+                        lastPinchMidY = currentMidY
+
+                        listener?.onTransformChanged()
+                        return true
+                    }
+
+                    BodyMode.NONE -> return false
+                }
+            }
+
+            MotionEvent.ACTION_POINTER_UP -> {
+                val liftedId = event.getPointerId(event.actionIndex)
+                if (bodyMode == BodyMode.TRANSFORM && (liftedId == pinchPointerId1 || liftedId == pinchPointerId2)) {
+                    val remainingId = if (liftedId == pinchPointerId1) pinchPointerId2 else pinchPointerId1
+                    val remainingIndex = event.findPointerIndex(remainingId)
+                    if (remainingIndex != -1) {
+                        bodyMode = BodyMode.DRAG
+                        dragPointerId = remainingId
+                        lastDragRawX = rawXAt(event, remainingIndex)
+                        lastDragRawY = rawYAt(event, remainingIndex)
+                    } else {
+                        bodyMode = BodyMode.NONE
+                    }
+                }
+                pinchPointerId1 = MotionEvent.INVALID_POINTER_ID
+                pinchPointerId2 = MotionEvent.INVALID_POINTER_ID
+                return true
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                val wasActive = bodyMode != BodyMode.NONE
+                bodyMode = BodyMode.NONE
+                dragPointerId = MotionEvent.INVALID_POINTER_ID
+                pinchPointerId1 = MotionEvent.INVALID_POINTER_ID
+                pinchPointerId2 = MotionEvent.INVALID_POINTER_ID
+                if (wasActive) listener?.onTransformCommitted()
                 return true
             }
         }
         return false
     }
 
-    private var rotateStartAngle = 0f
-    private var rotateStartRotation = 0f
+    private var rotateLastAngle = 0f
 
     private fun handleRotateTouch(event: MotionEvent): Boolean {
         val centerScreen = centerOnScreen()
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                rotateStartAngle = angleTo(centerScreen, event.rawX, event.rawY)
-                rotateStartRotation = rotation
+                rotateLastAngle = angleTo(centerScreen, event.rawX, event.rawY)
                 parent?.requestDisallowInterceptTouchEvent(true)
+                listener?.onTransformChanged()
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
                 parent?.requestDisallowInterceptTouchEvent(true)
-                val currentAngle = angleTo(centerScreen, event.rawX, event.rawY)
-                rotation = rotateStartRotation + (currentAngle - rotateStartAngle)
+                val currentAngle = angleTo(centerOnScreen(), event.rawX, event.rawY)
+                rotation += angleDelta(rotateLastAngle, currentAngle)
+                rotateLastAngle = currentAngle
                 listener?.onTransformChanged()
                 return true
             }
@@ -190,24 +319,24 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
         return false
     }
 
-    private var resizeStartDistance = 0f
-    private var resizeStartScale = 1f
+    private var resizeLastDistance = 0f
 
     private fun handleResizeTouch(event: MotionEvent): Boolean {
         val centerScreen = centerOnScreen()
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                resizeStartDistance = distanceTo(centerScreen, event.rawX, event.rawY).coerceAtLeast(1f)
-                resizeStartScale = scaleFactor
+                resizeLastDistance = distanceTo(centerScreen, event.rawX, event.rawY).coerceAtLeast(1f)
                 parent?.requestDisallowInterceptTouchEvent(true)
+                listener?.onTransformChanged()
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
                 parent?.requestDisallowInterceptTouchEvent(true)
-                val currentDistance = distanceTo(centerScreen, event.rawX, event.rawY)
-                val ratio = currentDistance / resizeStartDistance
-                scaleFactor = (resizeStartScale * ratio).coerceIn(0.2f, 6f)
+                val currentDistance = distanceTo(centerOnScreen(), event.rawX, event.rawY).coerceAtLeast(1f)
+                val ratio = currentDistance / resizeLastDistance
+                scaleFactor = (scaleFactor * ratio).coerceIn(0.2f, 6f)
                 applyScaleToContent()
+                resizeLastDistance = currentDistance
                 listener?.onTransformChanged()
                 return true
             }
@@ -217,6 +346,20 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
             }
         }
         return false
+    }
+
+    fun zoomIn(step: Float = 0.1f) {
+        scaleFactor = (scaleFactor + step).coerceIn(0.2f, 6f)
+        applyScaleToContent()
+        listener?.onTransformChanged()
+        listener?.onTransformCommitted()
+    }
+
+    fun zoomOut(step: Float = 0.1f) {
+        scaleFactor = (scaleFactor - step).coerceIn(0.2f, 6f)
+        applyScaleToContent()
+        listener?.onTransformChanged()
+        listener?.onTransformCommitted()
     }
 
     fun setBaseTextSizePx(px: Float) {
@@ -320,5 +463,7 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
     companion object {
         private const val SELECTION_BORDER_COLOR = 0xFF3D8BFF.toInt()
         private const val MIN_VISIBLE_STROKE_PX = 1.5f
+        private const val HOTSPOT_DP = 64
+        private const val ICON_DP = 32
     }
 }

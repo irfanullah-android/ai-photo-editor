@@ -2,11 +2,14 @@ package com.editor.photo.video.collagemaker.photoedit.feature.text
 
 import android.app.Dialog
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.Window
+import android.view.WindowManager
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.SeekBar
@@ -23,50 +26,37 @@ import com.editor.photo.video.collagemaker.photoedit.databinding.BottomSheetText
 import com.editor.photo.video.collagemaker.photoedit.editor.session.EditorSessionViewModel
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextAlignment
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextLayer
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
 
-/**
- * PHASE 2 — Compact STYLE-ONLY sheet. NO Cancel / NO Done (per spec).
- *
- * Koi canvas/preview yahan nahi — real [TextOverlayView] [PhotoStudioFragment] ke andar, real
- * photo view par render hoti hai. Ye sheet sirf ek "remote control" hai: har tool-tap FORAN
- * `sessionViewModel.updateText(...)` call karta hai jo asal layer ko commit karta hai — koi
- * draft/apply/confirm step nahi. Fragment `editorState.textLayers` observe karke overlay ko
- * turant update kar deta hai.
- */
 class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding>() {
 
     private val sessionViewModel: EditorSessionViewModel by activityViewModels()
 
     private var activeTool: TextToolType = TextToolType.STYLE
 
-    /** Local mirror — sirf UI state ke liye (selection highlight, seekbar progress). */
     private lateinit var working: TextLayer
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?) =
         BottomSheetTextEditorBinding.inflate(inflater, container, false)
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val dialog = super.onCreateDialog(savedInstanceState)
-        dialog.setOnShowListener { dialogInterface ->
-            val bottomSheetDialog = dialogInterface as BottomSheetDialog
-            val bottomSheet = bottomSheetDialog.findViewById<View>(
-                com.google.android.material.R.id.design_bottom_sheet
+        val dialog = Dialog(requireContext())
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setCancelable(true)
+        dialog.setCanceledOnTouchOutside(false)
+
+        dialog.window?.apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            setGravity(Gravity.BOTTOM)
+            setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
-            bottomSheet?.let { sheet ->
-                sheet.background = null
-                val behavior = BottomSheetBehavior.from(sheet)
-                behavior.skipCollapsed = true
-                behavior.state = BottomSheetBehavior.STATE_EXPANDED
-                behavior.isDraggable = true
-                dialog.window?.setLayout(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-                sheet.layoutParams?.height = ViewGroup.LayoutParams.WRAP_CONTENT
-            }
+            addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+            addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+            clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+            setDimAmount(0f)
         }
+
         return dialog
     }
 
@@ -75,7 +65,6 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
         val activeLayer = activeId?.let { id ->
             sessionViewModel.editorState.value.textLayers.firstOrNull { it.id == id }
         }
-        // Agar active text id nahi mila (process death jaisi edge-case), sheet ka koi matlab nahi.
         if (activeLayer == null) {
             dismiss()
             return
@@ -92,11 +81,32 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
         showPanelFor(activeTool)
     }
 
+    /**
+     * Fetches the up-to-date TextLayer from EditorSessionViewModel to ensure canvas transformations
+     * (like size, scale, translation, rotation) are preserved before applying sheet mutations.
+     */
+    private fun getLatestWorkingLayer(): TextLayer {
+        val activeId = sessionViewModel.activeTextId.value
+        return activeId?.let { id ->
+            sessionViewModel.editorState.value.textLayers.firstOrNull { it.id == id }
+        } ?: working
+    }
+
+    /**
+     * Helper that merges local sheet mutations with the latest ViewModel state before updating.
+     */
+    private inline fun mutateAndCommit(transform: TextLayer.() -> TextLayer) {
+        val latest = getLatestWorkingLayer()
+        val updated = latest.transform()
+        working = updated
+        sessionViewModel.updateText(updated)
+    }
+
     private var isProgrammaticSeekUpdate = false
 
     private fun setupTopIntensitySeekBar() {
         binding.sbTextIntensity.max = 200
-        val initialProgress = (working.size * 1000).toInt().coerceIn(10, 300)
+        val initialProgress = (getLatestWorkingLayer().size * 1000).toInt().coerceIn(10, 300)
         isProgrammaticSeekUpdate = true
         binding.sbTextIntensity.progress = initialProgress
         isProgrammaticSeekUpdate = false
@@ -105,9 +115,8 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser && !isProgrammaticSeekUpdate) {
                     val newSize = (progress / 1000f).coerceIn(0.01f, 0.4f)
-                    working = working.copy(size = newSize)
+                    mutateAndCommit { copy(size = newSize) }
                     syncSizePanelSeekBar(progress)
-                    commit()
                 }
             }
 
@@ -163,11 +172,6 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
         container.addView(panel)
     }
 
-    /** Har style change ke baad ye call hota hai — FORAN real layer commit karta hai. */
-    private fun commit() {
-        sessionViewModel.updateText(working)
-    }
-
     private fun buildStylePanel(): View {
         val row = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -183,13 +187,19 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
                 setOnClickListener {
                     onToggle()
                     isSelected = isActive()
-                    commit()
                 }
             }
         }
-        row.addView(styleButton(R.drawable.ic_bold, { working.isBold }) { working = working.copy(isBold = !working.isBold) })
-        row.addView(styleButton(R.drawable.ic_italic, { working.isItalic }) { working = working.copy(isItalic = !working.isItalic) })
-        row.addView(styleButton(R.drawable.ic_underline, { working.isUnderline }) { working = working.copy(isUnderline = !working.isUnderline) })
+        val layer = getLatestWorkingLayer()
+        row.addView(styleButton(R.drawable.ic_bold, { getLatestWorkingLayer().isBold }) {
+            mutateAndCommit { copy(isBold = !isBold) }
+        })
+        row.addView(styleButton(R.drawable.ic_italic, { getLatestWorkingLayer().isItalic }) {
+            mutateAndCommit { copy(isItalic = !isItalic) }
+        })
+        row.addView(styleButton(R.drawable.ic_underline, { getLatestWorkingLayer().isUnderline }) {
+            mutateAndCommit { copy(isUnderline = !isUnderline) }
+        })
         return row
     }
 
@@ -197,9 +207,8 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
         val rv = RecyclerView(requireContext()).apply {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         }
-        rv.adapter = FontAdapter(initialKey = working.fontFamily) { font ->
-            working = working.copy(fontFamily = font.key)
-            commit()
+        rv.adapter = FontAdapter(initialKey = getLatestWorkingLayer().fontFamily) { font ->
+            mutateAndCommit { copy(fontFamily = font.key) }
         }
         return rv
     }
@@ -208,20 +217,21 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
         val rv = RecyclerView(requireContext()).apply {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         }
-        val initialIndex = TEXT_COLORS.indexOf(working.color).let { if (it < 0) 0 else it }
+        val currentLayer = getLatestWorkingLayer()
+        val initialIndex = TEXT_COLORS.indexOf(currentLayer.color).let { if (it < 0) 0 else it }
         rv.adapter = ColorAdapter(TEXT_COLORS, initialIndex) { color ->
-            working = working.copy(color = color)
-            commit()
+            mutateAndCommit { copy(color = color) }
         }
         return rv
     }
 
     private fun buildStrokePanel(): View {
         val column = LinearLayout(requireContext()).apply { orientation = LinearLayout.VERTICAL }
+        var strokeLayer = getLatestWorkingLayer()
 
-        if (working.strokeWidth <= 0f) {
-            working = working.copy(strokeWidth = 0.012f)
-            commit()
+        if (strokeLayer.strokeWidth <= 0f) {
+            mutateAndCommit { copy(strokeWidth = 0.012f) }
+            strokeLayer = getLatestWorkingLayer()
         }
 
         val toggleRow = LinearLayout(requireContext()).apply {
@@ -229,7 +239,7 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
             gravity = Gravity.CENTER_VERTICAL
         }
         val toggle = Switch(requireContext()).apply {
-            isChecked = true
+            isChecked = strokeLayer.strokeWidth > 0f
             text = getString(R.string.text_editor_stroke_enable)
             setTextColor(Color.WHITE)
         }
@@ -238,8 +248,8 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
 
         val seek = SeekBar(requireContext()).apply {
             max = 100
-            progress = (working.strokeWidth * 1000).toInt().coerceIn(10, 100)
-            isEnabled = true
+            progress = (strokeLayer.strokeWidth * 1000).toInt().coerceIn(10, 100)
+            isEnabled = toggle.isChecked
         }
         val colorRv = RecyclerView(requireContext()).apply {
             layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
@@ -248,22 +258,21 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply { setMargins(0, dp(6), 0, 0) }
         }
-        val strokeInitialIndex = TEXT_COLORS.indexOf(working.strokeColor).let { if (it < 0) 0 else it }
+        val strokeInitialIndex = TEXT_COLORS.indexOf(strokeLayer.strokeColor).let { if (it < 0) 0 else it }
         colorRv.adapter = ColorAdapter(TEXT_COLORS, strokeInitialIndex) { color ->
-            working = working.copy(strokeColor = color)
-            commit()
+            mutateAndCommit { copy(strokeColor = color) }
         }
 
         toggle.setOnCheckedChangeListener { _, isChecked ->
             seek.isEnabled = isChecked
-            working = working.copy(strokeWidth = if (isChecked) (seek.progress / 1000f).coerceAtLeast(0.006f) else 0f)
-            commit()
+            mutateAndCommit {
+                copy(strokeWidth = if (isChecked) (seek.progress / 1000f).coerceAtLeast(0.006f) else 0f)
+            }
         }
         seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (toggle.isChecked && fromUser) {
-                    working = working.copy(strokeWidth = (progress / 1000f).coerceAtLeast(0.006f))
-                    commit()
+                    mutateAndCommit { copy(strokeWidth = (progress / 1000f).coerceAtLeast(0.006f)) }
                 }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -285,11 +294,10 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
                 setImageResource(iconRes)
                 background = ContextCompat.getDrawable(requireContext(), R.drawable.bg_font_item_selector)
                 setPadding(dp(10), dp(10), dp(10), dp(10))
-                isSelected = working.alignment == align
+                isSelected = getLatestWorkingLayer().alignment == align
                 layoutParams = LinearLayout.LayoutParams(dp(44), dp(44)).apply { marginEnd = dp(14) }
                 setOnClickListener {
-                    working = working.copy(alignment = align)
-                    commit()
+                    mutateAndCommit { copy(alignment = align) }
                     (parent as? LinearLayout)?.let { parentRow ->
                         for (i in 0 until parentRow.childCount) {
                             parentRow.getChildAt(i).isSelected = (parentRow.getChildAt(i) === this)
@@ -313,7 +321,7 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
 
         val seek = SeekBar(requireContext()).apply {
             max = 200
-            progress = (working.size * 1000).toInt().coerceIn(10, 300)
+            progress = (getLatestWorkingLayer().size * 1000).toInt().coerceIn(10, 300)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -324,9 +332,8 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser && !isProgrammaticSeekUpdate) {
                     val newSize = (progress / 1000f).coerceIn(0.01f, 0.4f)
-                    working = working.copy(size = newSize)
+                    mutateAndCommit { copy(size = newSize) }
                     updateTopIntensitySeekBar(progress)
-                    commit()
                 }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -338,7 +345,6 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
-
 
     override fun onDismiss(dialog: android.content.DialogInterface) {
         super.onDismiss(dialog)
@@ -355,8 +361,6 @@ class TextEditorBottomSheet : BaseEditorBottomSheet<BottomSheetTextEditorBinding
             Color.GRAY
         )
 
-        /** Ab koi `existingTextId` argument nahi chahiye — sheet [sessionViewModel.activeTextId]
-         * se khud target layer nikal leti hai (jo Phase 1 ke "Done" ne set kiya tha). */
         fun newInstance(): TextEditorBottomSheet = TextEditorBottomSheet()
     }
 }

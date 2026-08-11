@@ -171,6 +171,7 @@ class EditorSessionViewModel @Inject constructor(
     }
 
     fun refreshPreview() {
+        android.util.Log.d("TXT_DBG", "refreshPreview called", Throwable())
         viewModelScope.launch(Dispatchers.Default) {
             val activeId = _activeTextId.value
             val preview = editorRepository.renderPreview(excludeTextId = activeId)

@@ -39,7 +39,7 @@ abstract class BaseEditorBottomSheet<VB : ViewBinding> : BottomSheetDialogFragme
         dialog?.window?.setDimAmount(0f)
 
         dialog?.setOnShowListener { dialogInterface ->
-            val bottomSheetDialog = dialogInterface as BottomSheetDialog
+            val bottomSheetDialog = dialogInterface as? BottomSheetDialog ?: return@setOnShowListener
             val bottomSheet = bottomSheetDialog.findViewById<View>(
                 R.id.design_bottom_sheet
             )

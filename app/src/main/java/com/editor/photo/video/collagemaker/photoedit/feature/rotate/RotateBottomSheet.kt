@@ -1,6 +1,5 @@
 package com.editor.photo.video.collagemaker.photoedit.feature.rotate
 
-import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,41 +7,34 @@ import android.widget.SeekBar
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.editor.photo.video.collagemaker.photoedit.core.BaseEditorBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.databinding.BottomSheetRotateBinding
 import com.editor.photo.video.collagemaker.photoedit.editor.session.EditorSessionViewModel
 
-class RotateBottomSheet : BottomSheetDialogFragment() {
+class RotateBottomSheet :
+    BaseEditorBottomSheet<BottomSheetRotateBinding>() {
 
     private val sessionViewModel: EditorSessionViewModel by activityViewModels()
     private val rotateViewModel: RotateViewModel by viewModels()
 
-    private lateinit var binding: BottomSheetRotateBinding
-
-    override fun onCreateView(
+    override fun getViewBinding(
         inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = BottomSheetRotateBinding.inflate(inflater, container, false)
-        return binding.root
+        container: ViewGroup?
+    ): BottomSheetRotateBinding {
+        return BottomSheetRotateBinding.inflate(inflater, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupUI()
-        setupListeners()
-        observeViewModel()
-    }
-
-    private fun setupUI() {
+    override fun setupUI() {
         val state = sessionViewModel.editorState.value
+
         rotateViewModel.initState(
             state.rotation,
             state.flipHorizontal,
             state.flipVertical,
             state.canvasZoom
         )
+
+        observeViewModel()
     }
 
     private fun observeViewModel() {
@@ -63,7 +55,8 @@ class RotateBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    private fun setupListeners() {
+    override fun setupListeners() {
+
         binding.btnCheck.setOnClickListener {
             sessionViewModel.saveCanvasState()
             dismiss()
@@ -88,42 +81,66 @@ class RotateBottomSheet : BottomSheetDialogFragment() {
         }
 
         binding.layoutAngle.setOnClickListener {
-            toggleSeekBar(binding.layoutAngleSeekBar, binding.layoutZoomSeekBar)
+            toggleSeekBar(
+                binding.layoutAngleSeekBar,
+                binding.layoutZoomSeekBar
+            )
         }
 
         binding.layoutZoom.setOnClickListener {
-            toggleSeekBar(binding.layoutZoomSeekBar, binding.layoutAngleSeekBar)
+            toggleSeekBar(
+                binding.layoutZoomSeekBar,
+                binding.layoutAngleSeekBar
+            )
         }
 
-        binding.seekBarAngle.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    rotateViewModel.setRotation(progress.toFloat())
+        binding.seekBarAngle.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    if (fromUser) {
+                        rotateViewModel.setRotation(progress.toFloat())
+                    }
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    sessionViewModel.saveCanvasState()
                 }
             }
+        )
 
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                sessionViewModel.saveCanvasState()
-            }
-        })
+        binding.seekBarZoom.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
 
-        binding.seekBarZoom.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    val zoom = progressToZoom(progress)
-                    rotateViewModel.setZoom(zoom)
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    if (fromUser) {
+                        rotateViewModel.setZoom(progressToZoom(progress))
+                    }
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                    sessionViewModel.saveCanvasState()
                 }
             }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                sessionViewModel.saveCanvasState()
-            }
-        })
+        )
     }
 
-    private fun toggleSeekBar(showLayout: View, hideLayout: View) {
+    private fun toggleSeekBar(
+        showLayout: View,
+        hideLayout: View
+    ) {
         if (showLayout.visibility == View.VISIBLE) {
             showLayout.visibility = View.GONE
         } else {
