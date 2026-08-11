@@ -1,6 +1,7 @@
 package com.editor.photo.video.collagemaker.photoedit.editor.session
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -40,6 +41,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -71,6 +73,14 @@ class EditorSessionViewModel @Inject constructor(
 
     private val _activeTool = MutableStateFlow(EditorTool.NONE)
     val activeTool: StateFlow<EditorTool> = _activeTool.asStateFlow()
+
+    // ── Active text layer (Phase 1 → Phase 2 bridge) ───────────────────────
+    // Jab Phase 1 ("Enter text") "Done" hoti hai, ye us layer ka id set kar deta hai jo
+    // PhotoStudioFragment ke REAL photo view par overlay ke taur par render hoga aur jise
+    // TextEditorBottomSheet ke tools control karenge. Koi separate "draft" state nahi —
+    // har change seedha [_editorState].textLayers mein commit hoti hai (real-time).
+    private val _activeTextId = MutableStateFlow<String?>(null)
+    val activeTextId: StateFlow<String?> = _activeTextId.asStateFlow()
 
     fun loadImage(uri: Uri) {
         viewModelScope.launch {
@@ -162,7 +172,8 @@ class EditorSessionViewModel @Inject constructor(
 
     fun refreshPreview() {
         viewModelScope.launch(Dispatchers.Default) {
-            val preview = editorRepository.renderPreview()
+            val activeId = _activeTextId.value
+            val preview = editorRepository.renderPreview(excludeTextId = activeId)
             val original = editorRepository.getOriginalBitmap()
             val canUndo = editorRepository.canUndo()
             val canRedo = editorRepository.canRedo()
@@ -221,20 +232,21 @@ class EditorSessionViewModel @Inject constructor(
         refreshPreview()
     }
 
-    /**
-     * Adds a new text layer to the editor.
-     * Coordinates in [text] must be in normalized space (0f..1f).
-     */
+
     fun addText(text: TextLayer) {
         applyTextUseCase.add(text)
+        _editorState.value = _editorState.value.copy(
+            textLayers = _editorState.value.textLayers + text
+        )
         refreshPreview()
     }
 
-    /**
-     * Updates an existing text layer (same id) in the editor.
-     */
+
     fun updateText(text: TextLayer) {
         applyTextUseCase.update(text)
+        _editorState.value = _editorState.value.copy(
+            textLayers = _editorState.value.textLayers.map { if (it.id == text.id) text else it }
+        )
         refreshPreview()
     }
 
@@ -243,7 +255,54 @@ class EditorSessionViewModel @Inject constructor(
      */
     fun removeText(textId: String) {
         applyTextUseCase.remove(textId)
+        _editorState.value = _editorState.value.copy(
+            textLayers = _editorState.value.textLayers.filterNot { it.id == textId }
+        )
+        if (_activeTextId.value == textId) {
+            _activeTextId.value = null
+        }
         refreshPreview()
+    }
+
+
+    fun submitTextInput(existingTextId: String?, text: String) {
+        val existing = existingTextId?.let { id ->
+            _editorState.value.textLayers.firstOrNull { it.id == id }
+        }
+        if (existing != null) {
+            val updated = existing.copy(text = text)
+            applyTextUseCase.update(updated)
+            _editorState.value = _editorState.value.copy(
+                textLayers = _editorState.value.textLayers.map { if (it.id == updated.id) updated else it }
+            )
+            _activeTextId.value = updated.id
+        } else {
+            val newLayer = TextLayer(
+                id = UUID.randomUUID().toString(),
+                text = text,
+                x = 0.5f,
+                y = 0.5f,
+                size = 0.08f,
+                color = Color.WHITE,
+                alpha = 255,
+                rotation = 0f
+            )
+            applyTextUseCase.add(newLayer)
+            _editorState.value = _editorState.value.copy(
+                textLayers = _editorState.value.textLayers + newLayer
+            )
+            _activeTextId.value = newLayer.id
+        }
+        refreshPreview()
+    }
+
+    /** Overlay par tap-to-select ke liye (abhi optional — future use ke liye rakha hai). */
+    fun setActiveTextId(id: String?) {
+        val changed = _activeTextId.value != id
+        _activeTextId.value = id
+        if (changed) {
+            refreshPreview()
+        }
     }
 
     /**

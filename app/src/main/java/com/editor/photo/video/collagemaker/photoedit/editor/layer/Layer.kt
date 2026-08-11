@@ -33,7 +33,13 @@ sealed class Layer {
         val rotation: Float,
         val fontFamily: String?,
         val isBold: Boolean = false,
-        val isItalic: Boolean = false
+        val isItalic: Boolean = false,
+        val isUnderline: Boolean = false,
+        val alignment: com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextAlignment =
+            com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextAlignment.CENTER,
+        val strokeWidth: Float = 0f,
+        val strokeColor: Int = 0xFF000000.toInt(),
+        val letterSpacing: Float = 0f
     ) : Layer()
 
     data class Frame(

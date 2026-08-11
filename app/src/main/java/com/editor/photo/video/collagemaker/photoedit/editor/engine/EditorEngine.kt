@@ -150,7 +150,12 @@ class EditorEngine(
                             rotation = op.text.rotation,
                             fontFamily = op.text.fontFamily,
                             isBold = op.text.isBold,
-                            isItalic = op.text.isItalic
+                            isItalic = op.text.isItalic,
+                            isUnderline = op.text.isUnderline,
+                            alignment = op.text.alignment,
+                            strokeWidth = op.text.strokeWidth,
+                            strokeColor = op.text.strokeColor,
+                            letterSpacing = op.text.letterSpacing
                         )
                     )
                 }
@@ -169,7 +174,12 @@ class EditorEngine(
                             rotation = op.text.rotation,
                             fontFamily = op.text.fontFamily,
                             isBold = op.text.isBold,
-                            isItalic = op.text.isItalic
+                            isItalic = op.text.isItalic,
+                            isUnderline = op.text.isUnderline,
+                            alignment = op.text.alignment,
+                            strokeWidth = op.text.strokeWidth,
+                            strokeColor = op.text.strokeColor,
+                            letterSpacing = op.text.letterSpacing
                         )
                     )
                 }
@@ -205,13 +215,24 @@ class EditorEngine(
         }
     }
 
-    suspend fun renderPreview(widthLimit: Int = 1080): Bitmap? = withContext(Dispatchers.Default) {
+    suspend fun renderPreview(widthLimit: Int = 1080, excludeTextId: String? = null): Bitmap? = withContext(Dispatchers.Default) {
         val original = originalBitmap ?: return@withContext null
         if (original.isRecycled) return@withContext null
 
         // Start with a copy of the display baseline bitmap
         var rendered = original.copy(Bitmap.Config.ARGB_8888, true)
-        val ops = historyManager.getActiveOperations()
+        val filteredOps = historyManager.getActiveOperations().filter { op ->
+            if (excludeTextId != null) {
+                when (op) {
+                    is EditOperation.AddText -> op.text.id != excludeTextId
+                    is EditOperation.UpdateText -> op.text.id != excludeTextId
+                    else -> true
+                }
+            } else {
+                true
+            }
+        }
+        val ops = consolidateOperations(filteredOps)
 
         for (op in ops) {
             rendered = applyOperationOnBitmap(rendered, op, isPreview = true) ?: rendered
@@ -220,12 +241,24 @@ class EditorEngine(
         rendered
     }
 
-    suspend fun renderPreviewWithoutFrame(widthLimit: Int = 1080): Bitmap? = withContext(Dispatchers.Default) {
+    suspend fun renderPreviewWithoutFrame(widthLimit: Int = 1080, excludeTextId: String? = null): Bitmap? = withContext(Dispatchers.Default) {
         val original = originalBitmap ?: return@withContext null
         if (original.isRecycled) return@withContext null
 
         var rendered = original.copy(Bitmap.Config.ARGB_8888, true)
-        val ops = historyManager.getActiveOperations().filter { it !is EditOperation.ApplyFrame }
+        val filteredOps = historyManager.getActiveOperations().filter { op ->
+            if (op is EditOperation.ApplyFrame) return@filter false
+            if (excludeTextId != null) {
+                when (op) {
+                    is EditOperation.AddText -> op.text.id != excludeTextId
+                    is EditOperation.UpdateText -> op.text.id != excludeTextId
+                    else -> true
+                }
+            } else {
+                true
+            }
+        }
+        val ops = consolidateOperations(filteredOps)
 
         for (op in ops) {
             rendered = applyOperationOnBitmap(rendered, op, isPreview = true) ?: rendered
@@ -236,7 +269,7 @@ class EditorEngine(
 
     suspend fun renderHighRes(): Bitmap? = withContext(Dispatchers.Default) {
         val uri = baseUri ?: return@withContext null
-        val ops = historyManager.getActiveOperations()
+        val ops = consolidateOperations(historyManager.getActiveOperations())
 
         // Load full size original bitmap
         var rendered = try {
@@ -250,6 +283,59 @@ class EditorEngine(
         }
 
         rendered
+    }
+
+    private fun consolidateOperations(ops: List<EditOperation>): List<EditOperation> {
+        val result = mutableListOf<EditOperation>()
+        val latestTextMap = mutableMapOf<String, EditOperation>()
+        val latestStickerMap = mutableMapOf<String, EditOperation>()
+
+        for (op in ops) {
+            when (op) {
+                is EditOperation.AddText -> latestTextMap[op.text.id] = op
+                is EditOperation.UpdateText -> latestTextMap[op.text.id] = op
+                is EditOperation.RemoveText -> latestTextMap.remove(op.textId)
+                is EditOperation.AddSticker -> latestStickerMap[op.sticker.id] = op
+                is EditOperation.UpdateSticker -> latestStickerMap[op.sticker.id] = op
+                is EditOperation.RemoveSticker -> latestStickerMap.remove(op.stickerId)
+                else -> result.add(op)
+            }
+        }
+
+        val addedTextIds = mutableSetOf<String>()
+        val addedStickerIds = mutableSetOf<String>()
+
+        for (op in ops) {
+            when (op) {
+                is EditOperation.AddText -> {
+                    val id = op.text.id
+                    if (addedTextIds.add(id)) {
+                        latestTextMap[id]?.let { result.add(it) }
+                    }
+                }
+                is EditOperation.UpdateText -> {
+                    val id = op.text.id
+                    if (addedTextIds.add(id)) {
+                        latestTextMap[id]?.let { result.add(it) }
+                    }
+                }
+                is EditOperation.AddSticker -> {
+                    val id = op.sticker.id
+                    if (addedStickerIds.add(id)) {
+                        latestStickerMap[id]?.let { result.add(it) }
+                    }
+                }
+                is EditOperation.UpdateSticker -> {
+                    val id = op.sticker.id
+                    if (addedStickerIds.add(id)) {
+                        latestStickerMap[id]?.let { result.add(it) }
+                    }
+                }
+                else -> {}
+            }
+        }
+
+        return result
     }
 
     private fun applyOperationOnBitmap(bitmap: Bitmap, op: EditOperation, isPreview: Boolean): Bitmap? {
@@ -634,31 +720,71 @@ class EditorEngine(
         val pixelX = text.x * bitmap.width
         val pixelY = text.y * bitmap.height
 
-        val typeface = when {
-            text.isBold && text.isItalic -> Typeface.defaultFromStyle(Typeface.BOLD_ITALIC)
-            text.isBold -> Typeface.defaultFromStyle(Typeface.BOLD)
-            text.isItalic -> Typeface.defaultFromStyle(Typeface.ITALIC)
-            else -> Typeface.DEFAULT
+        val typeface = resolveTypeface(text.fontFamily, text.isBold, text.isItalic)
+        val paintAlign = when (text.alignment) {
+            com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextAlignment.LEFT -> Paint.Align.LEFT
+            com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextAlignment.CENTER -> Paint.Align.CENTER
+            com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextAlignment.RIGHT -> Paint.Align.RIGHT
         }
 
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textAlign = Paint.Align.CENTER
-            color = text.color
+        fun basePaint() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textAlign = paintAlign
             this.textSize = pixelSize
             this.typeface = typeface
-            alpha = text.alpha.coerceIn(0, 255)
+            isUnderlineText = text.isUnderline
+            if (text.letterSpacing != 0f) letterSpacing = text.letterSpacing
         }
 
         try {
             canvas.save()
             canvas.rotate(text.rotation, pixelX, pixelY)
-            canvas.drawText(text.text, pixelX, pixelY, paint)
+
+            // Stroke/outline is drawn first, underneath the fill, when enabled.
+            if (text.strokeWidth > 0f) {
+                val strokePaint = basePaint().apply {
+                    style = Paint.Style.STROKE
+                    strokeWidth = (text.strokeWidth * bitmap.width).coerceAtLeast(1f)
+                    color = text.strokeColor
+                    alpha = text.alpha.coerceIn(0, 255)
+                }
+                canvas.drawText(text.text, pixelX, pixelY, strokePaint)
+            }
+
+            val fillPaint = basePaint().apply {
+                style = Paint.Style.FILL
+                color = text.color
+                alpha = text.alpha.coerceIn(0, 255)
+            }
+            canvas.drawText(text.text, pixelX, pixelY, fillPaint)
             canvas.restore()
         } catch (e: Exception) {
             e.printStackTrace()
         }
         if (result != bitmap) bitmap.recycle()
         return result
+    }
+
+    /**
+     * Maps a [TextLayer.fontFamily] key (set by the Font tool in TextEditorBottomSheet) to a
+     * concrete [Typeface]. Only built-in Android font families are used — no bundled/proprietary
+     * font assets are introduced.
+     */
+    private fun resolveTypeface(fontFamily: String?, isBold: Boolean, isItalic: Boolean): Typeface {
+        val style = when {
+            isBold && isItalic -> Typeface.BOLD_ITALIC
+            isBold -> Typeface.BOLD
+            isItalic -> Typeface.ITALIC
+            else -> Typeface.NORMAL
+        }
+        val base = when (fontFamily) {
+            "serif" -> Typeface.SERIF
+            "monospace" -> Typeface.MONOSPACE
+            "sans_serif" -> Typeface.SANS_SERIF
+            "casual" -> Typeface.create("casual", Typeface.NORMAL)
+            "cursive" -> Typeface.create("cursive", Typeface.NORMAL)
+            else -> Typeface.DEFAULT
+        }
+        return Typeface.create(base, style)
     }
 
     private fun drawFrameOnBitmap(bitmap: Bitmap, frame: FrameLayer?): Bitmap {

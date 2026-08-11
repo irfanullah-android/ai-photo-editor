@@ -30,12 +30,12 @@ class EditorRepositoryImpl @Inject constructor(private val editorEngine: EditorE
 
     override fun getActiveOperations(): List<EditOperation> = editorEngine.getActiveOperations()
 
-    override suspend fun renderPreview(widthLimit: Int): Bitmap? {
-        return editorEngine.renderPreview(widthLimit)
+    override suspend fun renderPreview(widthLimit: Int, excludeTextId: String?): Bitmap? {
+        return editorEngine.renderPreview(widthLimit, excludeTextId)
     }
 
-    override suspend fun renderPreviewWithoutFrame(widthLimit: Int): Bitmap? {
-        return editorEngine.renderPreviewWithoutFrame(widthLimit)
+    override suspend fun renderPreviewWithoutFrame(widthLimit: Int, excludeTextId: String?): Bitmap? {
+        return editorEngine.renderPreviewWithoutFrame(widthLimit, excludeTextId)
     }
 
     override suspend fun renderHighRes(): Bitmap? {

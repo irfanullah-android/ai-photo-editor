@@ -1,0 +1,25 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/toolItemRoot"
+    android:layout_width="wrap_content"
+    android:layout_height="match_parent"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp">
+
+    <ImageView
+        android:id="@+id/ivToolIcon"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:alpha="0.65" />
+
+    <TextView
+        android:id="@+id/tvToolLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:alpha="0.65"
+        android:textColor="@android:color/white"
+        android:textSize="11sp" />
+</LinearLayout>

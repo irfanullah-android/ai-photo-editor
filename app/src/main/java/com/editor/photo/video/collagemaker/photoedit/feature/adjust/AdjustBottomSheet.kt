@@ -1,5 +1,6 @@
 package com.editor.photo.video.collagemaker.photoedit.feature.adjust
 
+import android.app.Dialog
 import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.graphics.ColorMatrix
@@ -26,6 +27,7 @@ import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine
 import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.FilterSpec
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.AdjustmentModel
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.AdjustmentType
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -60,6 +62,12 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
     ): View {
         binding = BottomSheetAdjustmentBinding.inflate(inflater, container, false)
         return binding.root
+    }
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
+        dialog.window?.setDimAmount(0f)
+        return dialog
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

@@ -45,8 +45,20 @@ data class TextLayer(
     val rotation: Float = 0f,
     val fontFamily: String? = null,
     val isBold: Boolean = false,
-    val isItalic: Boolean = false
+    val isItalic: Boolean = false,
+    val isUnderline: Boolean = false,
+    val alignment: TextAlignment = TextAlignment.CENTER,
+    /** Normalized stroke width (fraction of canvas width). 0f = no stroke/outline. */
+    val strokeWidth: Float = 0f,
+    val strokeColor: Int = 0xFF000000.toInt(),
+    /** Extra spacing between letters, in Paint.letterSpacing em units. */
+    val letterSpacing: Float = 0f
 )
+
+/** Horizontal text justification, applied around the TextLayer's anchor point. */
+enum class TextAlignment {
+    LEFT, CENTER, RIGHT
+}
 
 /**
  * Represents a sticker (emoji) overlay.

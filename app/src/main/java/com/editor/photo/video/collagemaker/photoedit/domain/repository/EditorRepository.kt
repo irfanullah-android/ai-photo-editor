@@ -14,8 +14,8 @@ interface EditorRepository {
     fun canUndo(): Boolean
     fun canRedo(): Boolean
     fun getActiveOperations(): List<EditOperation>
-    suspend fun renderPreview(widthLimit: Int = 1080): Bitmap?
-    suspend fun renderPreviewWithoutFrame(widthLimit: Int = 1080): Bitmap?
+    suspend fun renderPreview(widthLimit: Int = 1080, excludeTextId: String? = null): Bitmap?
+    suspend fun renderPreviewWithoutFrame(widthLimit: Int = 1080, excludeTextId: String? = null): Bitmap?
     suspend fun renderHighRes(): Bitmap?
     fun clear()
 }

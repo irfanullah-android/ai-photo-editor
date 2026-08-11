@@ -2,9 +2,8 @@
     <string name="app_name" translatable="false">FotoNova – Photo Editor</string>
     <string name="app_name_splash" translatable="false">AI PHOTO\nEDITOR</string>
     <string name="image" translatable="false">Image</string>
-    <item name="tag_immersive_applied" type="id" />
-
-    <!-- splash screen -->
+    <item name="tag_immersive_applied" type="id"/>
+    <!--  splash screen  -->
     <string name="skip">Skip</string>
     <string name="next">Next</string>
     <string name="select">Select</string>
@@ -12,61 +11,58 @@
     <string name="get_started">GET STARTED</string>
     <string name="ai_tools">Ai tools</string>
     <string name="history">History</string>
-    <string name="effect_preview" />
+    <string name="effect_preview"/>
     <string name="start">Start</string>
-
-    <!-- Page 1 -->
+    <!--  Page 1  -->
     <string name="on_boarding_1_title_1">Sharpen\nThe Moment</string>
     <string name="on_boarding_1_white_word">The</string>
     <string name="on_boarding_1_title_2">Enhance clarity instantly with AI.</string>
-
-    <!-- Page 2 -->
+    <!--  Page 2  -->
     <string name="on_boarding_2_title_1">Rewind &amp;\nRestore</string>
     <string name="on_boarding_2_white_word">&amp;</string>
     <string name="on_boarding_2_title_2">Bring old memories back to life.</string>
-
-    <!-- Page 3 -->
+    <!--  Page 3  -->
     <string name="on_boarding_3_title_1">Glow Like\nMagic</string>
     <string name="on_boarding_3_white_word">Like</string>
     <string name="on_boarding_3_title_2">Perfect your look in seconds.</string>
-
-    <!-- Page 4 -->
+    <!--  Page 4  -->
     <string name="on_boarding_4_title_1">Love in\nFrames</string>
     <string name="on_boarding_4_white_word">in</string>
     <string name="on_boarding_4_title_2">Turn portraits into romantic moments.</string>
-
     <string name="home">Home</string>
     <string name="words_have_power_nand_wisdom_has_no_limits_nlet_inspiration_guide_you">Words have power,\nand wisdom has no limits.\nLet inspiration guide you!</string>
     <string name="loading">loading...</string>
-    <!-- TODO: Remove or change this placeholder text -->
+    <!--  TODO: Remove or change this placeholder text  -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="continu">Continue</string>
     <string name="select_your_language">Select Your Language</string>
-
-    <!-- permission dialog -->
+    <!--  permission dialog  -->
     <string name="require_camera_permission">Camera Permission Required</string>
     <string name="camera_permission_description">Some feature requires access to your devices camera. Please allow camera permission to proceed.</string>
     <string name="require_notification_permission">Notification Permission Required</string>
     <string name="notification_permission_description">This app needs notification permission to send you important alerts.</string>
     <string name="require_storage_permission">Storage Permission Required</string>
     <string name="storage_permission_description">This app needs access to your media files (audio &amp; video) to function properly.</string>
-
     <string name="settings">Settings</string>
     <string name="cancel">Cancel</string>
+    <string name="text_editor_cancel">Cancel</string>
+    <string name="text_editor_done">Done</string>
+    <string name="text_editor_hint">Enter Your text</string>
+    <string name="text_editor_stroke_enable">Outline</string>
     <string name="privacy_policy">Privacy Policy</string>
     <string name="share_app">Share App</string>
     <string name="rate_us">Rate Us</string>
     <string name="more_apps">More Apps</string>
-
     <string name="permission">Permission</string>
     <string name="storage">Storage</string>
     <string name="we_will_need_your_storage_permission_to_give_you_better_experience">We will need your Storage permission to give you better experience</string>
     <string name="camera">Camera</string>
     <string name="notification_history">Notification History</string>
-    <string name="grant_camera_amp_files_access"><![CDATA[Grant Camera & Files Access]]></string>
+    <string name="grant_camera_amp_files_access">
+<![CDATA[ Grant Camera & Files Access ]]>
+</string>
     <string name="give_access">Give Access</string>
-
-    <!-- Home Fragment -->
+    <!--  Home Fragment  -->
     <string name="label_photo">Photo</string>
     <string name="label_collage">Collage</string>
     <string name="label_beautify">Beautify</string>
@@ -87,6 +83,5 @@
     <string name="label_frame">Frame</string>
     <string name="label_rotate">Rotate</string>
     <string name="welcome_back">Welcome Back</string>
-
-
+    <string name="text_editor_size_coming_soon">Size adjustment coming soon</string>
 </resources>

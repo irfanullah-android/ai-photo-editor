@@ -1,11 +1,9 @@
-package com.editor.photo.video.collagemaker.photoedit.adapters.bottomsheetsadapter
+package com.editor.photo.video.collagemaker.photoedit.feature.text
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.editor.photo.video.collagemaker.photoedit.databinding.ItemFontBinding
-import com.editor.photo.video.collagemaker.photoedit.feature.text.TextFontOption
-import com.editor.photo.video.collagemaker.photoedit.feature.text.TextFonts
 
 class FontAdapter(
     private val fonts: List<TextFontOption> = TextFonts.OPTIONS,
