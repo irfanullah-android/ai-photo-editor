@@ -102,5 +102,6 @@ data class CropData(
 data class FrameLayer(
     val id: String,
     val resourceId: Int,
-    val padding: Float = 0f
+    val padding: Float = 0f,
+    val frameName: String = ""
 )

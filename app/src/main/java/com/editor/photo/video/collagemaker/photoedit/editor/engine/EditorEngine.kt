@@ -288,6 +288,7 @@ class EditorEngine(
         val result = mutableListOf<EditOperation>()
         val latestTextMap = mutableMapOf<String, EditOperation>()
         val latestStickerMap = mutableMapOf<String, EditOperation>()
+        var latestFrameOp: EditOperation.ApplyFrame? = null   // ➕ naya
 
         for (op in ops) {
             when (op) {
@@ -297,6 +298,7 @@ class EditorEngine(
                 is EditOperation.AddSticker -> latestStickerMap[op.sticker.id] = op
                 is EditOperation.UpdateSticker -> latestStickerMap[op.sticker.id] = op
                 is EditOperation.RemoveSticker -> latestStickerMap.remove(op.stickerId)
+                is EditOperation.ApplyFrame -> latestFrameOp = op   // ➕ naya — sirf latest rakho
                 else -> result.add(op)
             }
         }
@@ -337,6 +339,8 @@ class EditorEngine(
                 else -> {}
             }
         }
+
+        latestFrameOp?.let { result.add(it) }
 
         return result
     }
@@ -830,31 +834,14 @@ class EditorEngine(
         return Typeface.create(base, style)
     }
 
-    /**
-     * FIXED: frame.padding was previously used as a raw pixel value directly against
-     * `bitmap.width`/`bitmap.height`. That works fine at PREVIEW resolution (~1080px, which is
-     * roughly what FrameBottomSheet.calculatePadding() was tuned for) but breaks at HIGH-RES
-     * EXPORT (bitmap can be 3000-4000px+): the same fixed pixel padding becomes a tiny sliver
-     * relative to the much larger bitmap, so setBounds() stretches the frame drawable across
-     * almost the entire image instead of leaving it as a thin border — i.e. the frame appears
-     * to cover the whole photo.
-     *
-     * Fix: treat frame.padding as calibrated against a REFERENCE width (1080px, matching where
-     * it's used/previewed), convert to a fraction of that reference, then scale the fraction
-     * against the actual target bitmap's width. This keeps the border proportionally the same
-     * size whether rendering a small preview or a full-resolution export — the same pattern
-     * already used for text size/position and doodle stroke width in this file.
-     */
     private fun drawFrameOnBitmap(bitmap: Bitmap, frame: FrameLayer): Bitmap {
         if (bitmap.isRecycled) return bitmap
 
         return try {
-            // High-res export safety: Calculate scaling factor based on a 1080px base reference
             val referenceDimension = 1080f
             val minDimension = kotlin.math.min(bitmap.width, bitmap.height).toFloat()
             val scaleFactor = (minDimension / referenceDimension).coerceAtLeast(1.0f)
 
-            // Dynamic padding computation
             val basePadding = frame.padding
             val leftPadding = (basePadding * scaleFactor).toInt()
             val rightPadding = (basePadding * scaleFactor).toInt()
@@ -867,45 +854,27 @@ class EditorEngine(
             val result = Bitmap.createBitmap(resultWidth, resultHeight, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(result)
 
-            val frameColor = when (frame.resourceId) {
-                1 -> Color.parseColor("#8B4513") // Classic / Wood
-                2 -> Color.parseColor("#2C3E50") // Modern
-                3 -> Color.parseColor("#D4A574") // Vintage
-                4 -> Color.parseColor("#FFD700") // Gold
-                5 -> Color.parseColor("#C0C0C0") // Silver
-                6 -> Color.parseColor("#000000") // Black
-                7 -> Color.parseColor("#FFFFFF") // White
-                8 -> Color.parseColor("#F5F5DC") // Polaroid
-                else -> Color.WHITE
+            // 1. Frame drawable PEHLE draw karo (background/base ki tarah)
+            val frameDrawable = try {
+                androidx.core.content.ContextCompat.getDrawable(context, frame.resourceId)
+            } catch (e: Exception) {
+                null
+            }
+            if (frameDrawable != null) {
+                frameDrawable.setBounds(0, 0, resultWidth, resultHeight)
+                frameDrawable.draw(canvas)
             }
 
-            // 1. Fill base with outer frame color
-            canvas.drawColor(frameColor)
-
-            // 2. Draw original bitmap strictly positioned inside border
+            // 2. Image UPAR draw karo — is se image hamesha dikhegi, chahe frame transparent ho ya na ho
             canvas.drawBitmap(bitmap, leftPadding.toFloat(), topPadding.toFloat(), null)
-
-            // 3. Add soft inner border shadow
-            val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = Color.BLACK
-                alpha = 40
-                style = Paint.Style.STROKE
-                strokeWidth = (2f * scaleFactor).coerceAtLeast(1f)
-            }
-
-            canvas.drawRect(
-                leftPadding.toFloat(),
-                topPadding.toFloat(),
-                (leftPadding + bitmap.width).toFloat(),
-                (topPadding + bitmap.height).toFloat(),
-                shadowPaint
-            )
 
             result
         } catch (e: Exception) {
             e.printStackTrace()
             bitmap
         }
+    
+
     }
 
 

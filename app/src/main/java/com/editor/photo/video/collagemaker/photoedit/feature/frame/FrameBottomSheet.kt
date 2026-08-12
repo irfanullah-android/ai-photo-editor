@@ -11,26 +11,28 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.editor.photo.video.collagemaker.photoedit.adapters.bottomsheetsadapter.FrameAdapter
+import com.editor.photo.video.collagemaker.photoedit.core.BaseEditorBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.databinding.BottomSheetFrameBinding
 import com.editor.photo.video.collagemaker.photoedit.editor.session.EditorSessionViewModel
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.FrameLayer
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.FrameModel
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import ja.burhanrashid52.photoeditor.PhotoEditorView
+import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.math.min
 
 @AndroidEntryPoint
-class FrameBottomSheet : BottomSheetDialogFragment() {
+class FrameBottomSheet : BaseEditorBottomSheet<BottomSheetFrameBinding>() {
 
     private val sessionViewModel: EditorSessionViewModel by activityViewModels()
     private val frameViewModel: FrameViewModel by viewModels()
 
-    private lateinit var binding: BottomSheetFrameBinding
     private var photoEditorView: PhotoEditorView? = null
     private var baseBitmap: Bitmap? = null
 
@@ -38,26 +40,25 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
     private var frameAdapter: FrameAdapter? = null
     private var wasApplied = false
 
-    override fun onCreateView(
+    override fun getViewBinding(
         inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = BottomSheetFrameBinding.inflate(inflater, container, false)
-        return binding.root
+        container: ViewGroup?
+    ): BottomSheetFrameBinding {
+        return BottomSheetFrameBinding.inflate(inflater, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+    override fun setupUI() {
         try {
             originalBitmap = baseBitmap?.copy(Bitmap.Config.ARGB_8888, true)
         } catch (e: Exception) {
             e.printStackTrace()
         }
         setupFrameRecyclerView()
-        setupClickListeners()
         observeViewModel()
+    }
+
+    override fun setupListeners() {
+        setupClickListeners()
     }
 
     private fun setupFrameRecyclerView() {
@@ -67,26 +68,30 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
             false
         )
 
-        lifecycleScope.launchWhenStarted {
-            frameViewModel.frames.collect { frames ->
-                if (frames.isEmpty()) return@collect
-                if (frameAdapter == null) {
-                    frameAdapter = FrameAdapter(
-                        frames = frames,
-                        originalBitmap = originalBitmap
-                    ) { frame ->
-                        frameViewModel.selectFrame(frame)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                frameViewModel.frames.collect { frames ->
+                    if (frames.isEmpty()) return@collect
+                    if (frameAdapter == null) {
+                        frameAdapter = FrameAdapter(
+                            frames = frames,
+                            originalBitmap = originalBitmap
+                        ) { frame ->
+                            frameViewModel.selectFrame(frame)
+                        }
+                        binding.rvFrames.adapter = frameAdapter
                     }
-                    binding.rvFrames.adapter = frameAdapter
                 }
             }
         }
     }
 
     private fun observeViewModel() {
-        lifecycleScope.launchWhenStarted {
-            frameViewModel.selectedFrame.collect { frame ->
-                frame?.let { applyFrame(it) }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                frameViewModel.selectedFrame.collect { frame ->
+                    frame?.let { applyFrame(it) }
+                }
             }
         }
     }
@@ -120,12 +125,12 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
                     FrameLayer(
                         id = UUID.randomUUID().toString(),
                         resourceId = selected.frameRes,
-                        padding = padding.toFloat()
+                        padding = padding.toFloat(),
+                        frameName = selected.name
                     )
                 )
                 wasApplied = true
             } else if (selected?.name == "None") {
-                // Clear frame if user selected None
                 sessionViewModel.applyFrame(null)
                 wasApplied = true
             }
@@ -158,7 +163,6 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
         return try {
             val rawPadding = calculatePadding(frame.name)
 
-            // Dynamic scale so high-res image doesn't crush the padding
             val referenceSize = 1080f
             val minDim = min(bitmap.width, bitmap.height).toFloat()
             val scaleFactor = (minDim / referenceSize).coerceAtLeast(1.0f)
@@ -175,77 +179,44 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
             val result = Bitmap.createBitmap(resultWidth, resultHeight, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(result)
 
-            val frameColor = when (frame.name) {
-                "Classic" -> Color.parseColor("#8B4513")
-                "Modern" -> Color.parseColor("#2C3E50")
-                "Vintage" -> Color.parseColor("#D4A574")
-                "Gold" -> Color.parseColor("#FFD700")
-                "Silver" -> Color.parseColor("#C0C0C0")
-                "Wood" -> Color.parseColor("#8B4513")
-                "Metal" -> Color.parseColor("#708090")
-                "Black" -> Color.parseColor("#000000")
-                "White" -> Color.parseColor("#FFFFFF")
-                "Polaroid" -> Color.parseColor("#F5F5DC")
-                "Film" -> Color.parseColor("#1C1C1C")
-                else -> Color.WHITE
+            // 1. Frame drawable PEHLE draw karo
+            val frameDrawable = try {
+                androidx.core.content.ContextCompat.getDrawable(requireContext(), frame.frameRes)
+            } catch (e: Exception) {
+                null
+            }
+            if (frameDrawable != null) {
+                frameDrawable.setBounds(0, 0, resultWidth, resultHeight)
+                frameDrawable.draw(canvas)
             }
 
-            // 1. Fill canvas background with frame color
-            canvas.drawColor(frameColor)
-
-            // 2. Draw original bitmap strictly in the center region
+            // 2. Image UPAR draw karo
             canvas.drawBitmap(bitmap, leftPadding.toFloat(), topPadding.toFloat(), null)
-
-            // 3. Draw subtle inner shadow
-            addFrameShadow(canvas, leftPadding, topPadding, bitmap.width, bitmap.height, scaleFactor)
 
             result
         } catch (e: Exception) {
             e.printStackTrace()
             bitmap
         }
+
+
     }
 
-    private fun addFrameShadow(
-        canvas: Canvas,
-        left: Int,
-        top: Int,
-        width: Int,
-        height: Int,
-        scaleFactor: Float = 1.0f
-    ) {
-        val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.BLACK
-            alpha = 40
-            style = Paint.Style.STROKE
-            strokeWidth = (2f * scaleFactor).coerceAtLeast(1f)
-        }
-
-        canvas.drawRect(
-            left.toFloat(),
-            top.toFloat(),
-            (left + width).toFloat(),
-            (top + height).toFloat(),
-            shadowPaint
-        )
-    }
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
-        // If user cancelled (did not press check), restore original image preview
         if (!wasApplied) {
-            val original = originalBitmap
-            val editorView = photoEditorView
-            if (original != null && editorView != null) {
-                editorView.source.setImageBitmap(original)
-            }
+            sessionViewModel.refreshPreview()
         }
     }
 
     override fun onDestroyView() {
         frameAdapter?.cleanup()
         frameAdapter = null
-        originalBitmap?.recycle()
+
+
+        photoEditorView?.source?.setImageDrawable(null)
+
         originalBitmap = null
         photoEditorView = null
         baseBitmap = null

@@ -2,7 +2,7 @@ package com.editor.photo.video.collagemaker.photoedit.data.repository
 
 import com.editor.photo.video.collagemaker.photoedit.R
 import com.editor.photo.video.collagemaker.photoedit.domain.repository.AssetRepository
-import javax.inject.Inject
+import javax.inject.Inject   // ➕ ye import add karo
 
 class AssetRepositoryImpl @Inject constructor() : AssetRepository {
     override fun getStickers(): List<Int> {
