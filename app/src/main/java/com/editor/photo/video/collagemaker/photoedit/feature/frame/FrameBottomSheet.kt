@@ -1,10 +1,10 @@
 package com.editor.photo.video.collagemaker.photoedit.feature.frame
 
+import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,16 +13,18 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.editor.photo.video.collagemaker.photoedit.R
 import com.editor.photo.video.collagemaker.photoedit.adapters.bottomsheetsadapter.FrameAdapter
 import com.editor.photo.video.collagemaker.photoedit.databinding.BottomSheetFrameBinding
 import com.editor.photo.video.collagemaker.photoedit.editor.session.EditorSessionViewModel
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.FrameLayer
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.FrameModel
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import dagger.hilt.android.AndroidEntryPoint
 import ja.burhanrashid52.photoeditor.PhotoEditorView
 import java.util.UUID
+import kotlin.math.min
 
+@AndroidEntryPoint
 class FrameBottomSheet : BottomSheetDialogFragment() {
 
     private val sessionViewModel: EditorSessionViewModel by activityViewModels()
@@ -59,39 +61,26 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun setupFrameRecyclerView() {
-        val frames = getFramesList()
-
         binding.rvFrames.layoutManager = LinearLayoutManager(
             requireContext(),
             LinearLayoutManager.HORIZONTAL,
             false
         )
 
-        frameAdapter = FrameAdapter(
-            frames = frames,
-            originalBitmap = originalBitmap
-        ) { frame ->
-            frameViewModel.selectFrame(frame)
+        lifecycleScope.launchWhenStarted {
+            frameViewModel.frames.collect { frames ->
+                if (frames.isEmpty()) return@collect
+                if (frameAdapter == null) {
+                    frameAdapter = FrameAdapter(
+                        frames = frames,
+                        originalBitmap = originalBitmap
+                    ) { frame ->
+                        frameViewModel.selectFrame(frame)
+                    }
+                    binding.rvFrames.adapter = frameAdapter
+                }
+            }
         }
-
-        binding.rvFrames.adapter = frameAdapter
-    }
-
-    private fun getFramesList(): List<FrameModel> {
-        return listOf(
-            FrameModel("None", R.drawable.ic_no_frame),
-            FrameModel("Classic", R.drawable.frame_classic),
-            FrameModel("Modern", R.drawable.frame_modern),
-            FrameModel("Vintage", R.drawable.frame_vintage),
-            FrameModel("Polaroid", R.drawable.frame_polaroid),
-            FrameModel("Film", R.drawable.frame_film),
-            FrameModel("Wood", R.drawable.frame_wood),
-            FrameModel("Metal", R.drawable.frame_metal),
-            FrameModel("Gold", R.drawable.frame_gold),
-            FrameModel("Silver", R.drawable.frame_silver),
-            FrameModel("Black", R.drawable.frame_black),
-            FrameModel("White", R.drawable.frame_white)
-        )
     }
 
     private fun observeViewModel() {
@@ -105,6 +94,7 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
     private fun applyFrame(frame: FrameModel) {
         val original = originalBitmap ?: return
         val editorView = photoEditorView ?: return
+
         if (frame.name == "None") {
             editorView.source.setImageBitmap(original)
             return
@@ -128,11 +118,15 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
                 val padding = calculatePadding(selected.name)
                 sessionViewModel.applyFrame(
                     FrameLayer(
-                        UUID.randomUUID().toString(),
-                        selected.frameRes,
-                        padding.toFloat()
+                        id = UUID.randomUUID().toString(),
+                        resourceId = selected.frameRes,
+                        padding = padding.toFloat()
                     )
                 )
+                wasApplied = true
+            } else if (selected?.name == "None") {
+                // Clear frame if user selected None
+                sessionViewModel.applyFrame(null)
                 wasApplied = true
             }
             dismiss()
@@ -162,13 +156,22 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
 
     private fun createFramedBitmap(bitmap: Bitmap, frame: FrameModel): Bitmap? {
         return try {
-            val padding = calculatePadding(frame.name)
+            val rawPadding = calculatePadding(frame.name)
+
+            // Dynamic scale so high-res image doesn't crush the padding
+            val referenceSize = 1080f
+            val minDim = min(bitmap.width, bitmap.height).toFloat()
+            val scaleFactor = (minDim / referenceSize).coerceAtLeast(1.0f)
+
+            val padding = (rawPadding * scaleFactor).toInt()
             val topPadding = padding
-            val bottomPadding = if (frame.name == "Polaroid") 90 else padding
+            val bottomPadding = if (frame.name == "Polaroid") (padding * 2.2f).toInt() else padding
             val leftPadding = padding
             val rightPadding = padding
+
             val resultWidth = bitmap.width + leftPadding + rightPadding
             val resultHeight = bitmap.height + topPadding + bottomPadding
+
             val result = Bitmap.createBitmap(resultWidth, resultHeight, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(result)
 
@@ -187,9 +190,14 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
                 else -> Color.WHITE
             }
 
+            // 1. Fill canvas background with frame color
             canvas.drawColor(frameColor)
+
+            // 2. Draw original bitmap strictly in the center region
             canvas.drawBitmap(bitmap, leftPadding.toFloat(), topPadding.toFloat(), null)
-            addFrameShadow(canvas, leftPadding, topPadding, bitmap.width, bitmap.height)
+
+            // 3. Draw subtle inner shadow
+            addFrameShadow(canvas, leftPadding, topPadding, bitmap.width, bitmap.height, scaleFactor)
 
             result
         } catch (e: Exception) {
@@ -198,12 +206,19 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    private fun addFrameShadow(canvas: Canvas, left: Int, top: Int, width: Int, height: Int) {
-        val shadowPaint = Paint().apply {
+    private fun addFrameShadow(
+        canvas: Canvas,
+        left: Int,
+        top: Int,
+        width: Int,
+        height: Int,
+        scaleFactor: Float = 1.0f
+    ) {
+        val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.BLACK
-            alpha = 50
+            alpha = 40
             style = Paint.Style.STROKE
-            strokeWidth = 2f
+            strokeWidth = (2f * scaleFactor).coerceAtLeast(1f)
         }
 
         canvas.drawRect(
@@ -217,6 +232,7 @@ class FrameBottomSheet : BottomSheetDialogFragment() {
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
+        // If user cancelled (did not press check), restore original image preview
         if (!wasApplied) {
             val original = originalBitmap
             val editorView = photoEditorView

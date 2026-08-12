@@ -5,26 +5,40 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent">
 
+    <!-- Blurred photo backdrop -->
     <ImageView
         android:id="@+id/ivInputBackdrop"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#1A1A1A"
+        android:background="#F0F0F0"
         android:scaleType="centerCrop"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Light frosted glass overlay (iOS-style white tint) -->
     <View
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#66000000"
+        android:background="#AAFFFFFF"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Drag handle -->
+    <View
+        android:id="@+id/viewDragHandle"
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_drag_handle"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Cancel button — dark text -->
     <TextView
         android:id="@+id/btnInputCancel"
         android:layout_width="wrap_content"
@@ -34,11 +48,12 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:padding="6dp"
         android:text="@string/text_editor_cancel"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
+        android:textColor="#1C1C1E"
+        android:textSize="17sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/viewDragHandle" />
 
+    <!-- Done button — iOS blue -->
     <TextView
         android:id="@+id/btnInputDone"
         android:layout_width="wrap_content"
@@ -48,13 +63,14 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:padding="6dp"
         android:text="@string/text_editor_done"
-        android:textColor="@color/accent"
-        android:textSize="16sp"
+        android:textColor="#007AFF"
+        android:textSize="17sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/btnInputCancel"
         app:layout_constraintBottom_toBottomOf="@id/btnInputCancel" />
 
+    <!-- Centered EditText — dark text on frosted background -->
     <EditText
         android:id="@+id/etTextInputMode"
         android:layout_width="0dp"
@@ -66,8 +82,8 @@
         android:hint="@string/text_editor_hint"
         android:inputType="textCapSentences|textMultiLine|textAutoCorrect"
         android:maxLines="5"
-        android:textColor="@android:color/white"
-        android:textColorHint="#80FFFFFF"
+        android:textColor="#1C1C1E"
+        android:textColorHint="#80000000"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"

@@ -74,11 +74,6 @@ class EditorSessionViewModel @Inject constructor(
     private val _activeTool = MutableStateFlow(EditorTool.NONE)
     val activeTool: StateFlow<EditorTool> = _activeTool.asStateFlow()
 
-    // ── Active text layer (Phase 1 → Phase 2 bridge) ───────────────────────
-    // Jab Phase 1 ("Enter text") "Done" hoti hai, ye us layer ka id set kar deta hai jo
-    // PhotoStudioFragment ke REAL photo view par overlay ke taur par render hoga aur jise
-    // TextEditorBottomSheet ke tools control karenge. Koi separate "draft" state nahi —
-    // har change seedha [_editorState].textLayers mein commit hoti hai (real-time).
     private val _activeTextId = MutableStateFlow<String?>(null)
     val activeTextId: StateFlow<String?> = _activeTextId.asStateFlow()
 
@@ -223,16 +218,10 @@ class EditorSessionViewModel @Inject constructor(
         refreshPreview()
     }
 
-    /**
-     * Commits ONE completed doodle stroke as a single history operation.
-     * Callers (e.g. DoodleBottomSheet) must call this once per finished stroke
-     * (on touch-up), never per touch-move, so undo/redo stays coherent.
-     */
     fun addDoodle(path: DoodlePath) {
         applyDoodleUseCase(path)
         refreshPreview()
     }
-
 
     fun addText(text: TextLayer) {
         applyTextUseCase.add(text)
@@ -242,7 +231,6 @@ class EditorSessionViewModel @Inject constructor(
         refreshPreview()
     }
 
-
     fun updateText(text: TextLayer) {
         applyTextUseCase.update(text)
         _editorState.value = _editorState.value.copy(
@@ -251,9 +239,6 @@ class EditorSessionViewModel @Inject constructor(
         refreshPreview()
     }
 
-    /**
-     * Removes a text layer by id.
-     */
     fun removeText(textId: String) {
         applyTextUseCase.remove(textId)
         _editorState.value = _editorState.value.copy(
@@ -264,7 +249,6 @@ class EditorSessionViewModel @Inject constructor(
         }
         refreshPreview()
     }
-
 
     fun submitTextInput(existingTextId: String?, text: String) {
         val existing = existingTextId?.let { id ->
@@ -297,7 +281,6 @@ class EditorSessionViewModel @Inject constructor(
         refreshPreview()
     }
 
-    /** Overlay par tap-to-select ke liye (abhi optional — future use ke liye rakha hai). */
     fun setActiveTextId(id: String?) {
         val changed = _activeTextId.value != id
         _activeTextId.value = id
@@ -306,26 +289,16 @@ class EditorSessionViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Adds a new sticker (emoji) layer to the editor.
-     * Coordinates in [sticker] must be in normalized space (0f..1f).
-     */
     fun addSticker(sticker: StickerLayer) {
         applyStickerUseCase.add(sticker)
         refreshPreview()
     }
 
-    /**
-     * Updates an existing sticker layer (same id).
-     */
     fun updateSticker(sticker: StickerLayer) {
         applyStickerUseCase.update(sticker)
         refreshPreview()
     }
 
-    /**
-     * Removes a sticker layer by id.
-     */
     fun removeSticker(stickerId: String) {
         applyStickerUseCase.remove(stickerId)
         refreshPreview()

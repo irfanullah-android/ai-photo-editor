@@ -13,9 +13,6 @@ import javax.inject.Inject
 
 class AIRepositoryImpl @Inject constructor(@ApplicationContext private val context: Context) : AIRepository {
 
-    // BackgroundRemover.init loads a TFLite model from assets and constructs an Interpreter -
-    // this is expensive (asset I/O + model init), so it is created once and reused for the
-    // lifetime of this (ViewModelScoped) repository instance instead of per-call.
     private var backgroundRemover: BackgroundRemover? = null
     private val mutex = Mutex()
 

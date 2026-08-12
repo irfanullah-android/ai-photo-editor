@@ -8,7 +8,6 @@ import android.graphics.ColorMatrix
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.net.Uri
@@ -23,15 +22,11 @@ import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.AdjustmentType
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.DoodlePath
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.DoodleShapeType
-import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorEnhance
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.FrameLayer
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.StickerLayer
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextLayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileOutputStream
-import java.util.UUID
 import kotlin.math.roundToInt
 
 class EditorEngine(
@@ -86,14 +81,6 @@ class EditorEngine(
 
     fun getActiveOperations(): List<EditOperation> = historyManager.getActiveOperations()
 
-    /**
-     * Rebuilds the LayerManager state from the current operation list.
-     *
-     * Key correctness rules:
-     * - RemoveText/RemoveSticker MUST call removeLayer so rendering and zIndex are right.
-     * - zIndex is assigned in operation order so later ops appear on top.
-     * - Add and Update both upsert into the layer map (Update replaces with same id).
-     */
     private fun syncLayersFromOperations() {
         layerManager.clear()
         var zIndex = 0
@@ -115,6 +102,7 @@ class EditorEngine(
                         )
                     )
                 }
+
                 is EditOperation.UpdateSticker -> {
                     layerManager.addOrUpdateLayer(
                         Layer.Sticker(
@@ -131,10 +119,11 @@ class EditorEngine(
                         )
                     )
                 }
+
                 is EditOperation.RemoveSticker -> {
                     layerManager.removeLayer(op.stickerId)
-                    // zIndex not incremented — the slot is gone
                 }
+
                 is EditOperation.AddText -> {
                     layerManager.addOrUpdateLayer(
                         Layer.Text(
@@ -159,6 +148,7 @@ class EditorEngine(
                         )
                     )
                 }
+
                 is EditOperation.UpdateText -> {
                     layerManager.addOrUpdateLayer(
                         Layer.Text(
@@ -183,10 +173,11 @@ class EditorEngine(
                         )
                     )
                 }
+
                 is EditOperation.RemoveText -> {
                     layerManager.removeLayer(op.textId)
-                    // zIndex not incremented — the slot is gone
                 }
+
                 is EditOperation.ApplyFrame -> {
                     if (op.frame != null) {
                         layerManager.addOrUpdateLayer(
@@ -200,6 +191,7 @@ class EditorEngine(
                         )
                     }
                 }
+
                 is EditOperation.Doodle -> {
                     layerManager.addOrUpdateLayer(
                         Layer.Doodle(
@@ -210,38 +202,43 @@ class EditorEngine(
                         )
                     )
                 }
-                else -> { /* Non-layer operations (Adjust, Filter, Crop, Rotate, etc.) */ }
-            }
-        }
-    }
 
-    suspend fun renderPreview(widthLimit: Int = 1080, excludeTextId: String? = null): Bitmap? = withContext(Dispatchers.Default) {
-        val original = originalBitmap ?: return@withContext null
-        if (original.isRecycled) return@withContext null
-
-        // Start with a copy of the display baseline bitmap
-        var rendered = original.copy(Bitmap.Config.ARGB_8888, true)
-        val filteredOps = historyManager.getActiveOperations().filter { op ->
-            if (excludeTextId != null) {
-                when (op) {
-                    is EditOperation.AddText -> op.text.id != excludeTextId
-                    is EditOperation.UpdateText -> op.text.id != excludeTextId
-                    else -> true
+                else -> { /* Non-layer operations (Adjust, Filter, Crop, Rotate, etc.) */
                 }
-            } else {
-                true
             }
         }
-        val ops = consolidateOperations(filteredOps)
-
-        for (op in ops) {
-            rendered = applyOperationOnBitmap(rendered, op, isPreview = true) ?: rendered
-        }
-
-        rendered
     }
 
-    suspend fun renderPreviewWithoutFrame(widthLimit: Int = 1080, excludeTextId: String? = null): Bitmap? = withContext(Dispatchers.Default) {
+    suspend fun renderPreview(widthLimit: Int = 1080, excludeTextId: String? = null): Bitmap? =
+        withContext(Dispatchers.Default) {
+            val original = originalBitmap ?: return@withContext null
+            if (original.isRecycled) return@withContext null
+
+            var rendered = original.copy(Bitmap.Config.ARGB_8888, true)
+            val filteredOps = historyManager.getActiveOperations().filter { op ->
+                if (excludeTextId != null) {
+                    when (op) {
+                        is EditOperation.AddText -> op.text.id != excludeTextId
+                        is EditOperation.UpdateText -> op.text.id != excludeTextId
+                        else -> true
+                    }
+                } else {
+                    true
+                }
+            }
+            val ops = consolidateOperations(filteredOps)
+
+            for (op in ops) {
+                rendered = applyOperationOnBitmap(rendered, op, isPreview = true) ?: rendered
+            }
+
+            rendered
+        }
+
+    suspend fun renderPreviewWithoutFrame(
+        widthLimit: Int = 1080,
+        excludeTextId: String? = null
+    ): Bitmap? = withContext(Dispatchers.Default) {
         val original = originalBitmap ?: return@withContext null
         if (original.isRecycled) return@withContext null
 
@@ -271,9 +268,11 @@ class EditorEngine(
         val uri = baseUri ?: return@withContext null
         val ops = consolidateOperations(historyManager.getActiveOperations())
 
-        // Load full size original bitmap
         var rendered = try {
-            imageProcessor.processImage(uri, com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorState())
+            imageProcessor.processImage(
+                uri,
+                com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorState()
+            )
         } catch (e: Exception) {
             return@withContext null
         }
@@ -313,24 +312,28 @@ class EditorEngine(
                         latestTextMap[id]?.let { result.add(it) }
                     }
                 }
+
                 is EditOperation.UpdateText -> {
                     val id = op.text.id
                     if (addedTextIds.add(id)) {
                         latestTextMap[id]?.let { result.add(it) }
                     }
                 }
+
                 is EditOperation.AddSticker -> {
                     val id = op.sticker.id
                     if (addedStickerIds.add(id)) {
                         latestStickerMap[id]?.let { result.add(it) }
                     }
                 }
+
                 is EditOperation.UpdateSticker -> {
                     val id = op.sticker.id
                     if (addedStickerIds.add(id)) {
                         latestStickerMap[id]?.let { result.add(it) }
                     }
                 }
+
                 else -> {}
             }
         }
@@ -338,7 +341,11 @@ class EditorEngine(
         return result
     }
 
-    private fun applyOperationOnBitmap(bitmap: Bitmap, op: EditOperation, isPreview: Boolean): Bitmap? {
+    private fun applyOperationOnBitmap(
+        bitmap: Bitmap,
+        op: EditOperation,
+        isPreview: Boolean
+    ): Bitmap? {
         if (bitmap.isRecycled) return null
         return when (op) {
             is EditOperation.Adjust -> {
@@ -353,12 +360,14 @@ class EditorEngine(
                 if (result != bitmap) bitmap.recycle()
                 result
             }
+
             is EditOperation.Filter -> {
                 val spec = op.filter.buildFilterSpec(op.intensity)
                 val result = ColorMatrixEngine.render(bitmap, spec)
                 if (result != bitmap) bitmap.recycle()
                 result
             }
+
             is EditOperation.Effect -> {
                 val fullEffect = EffectsEngine.apply(op.effectType, bitmap)
                 val blended = blendBitmaps(bitmap, fullEffect, op.intensity)
@@ -368,19 +377,22 @@ class EditorEngine(
                 if (blended != bitmap) bitmap.recycle()
                 blended
             }
+
             is EditOperation.Enhance -> {
                 val values = EnhanceEngine.EnhanceValues().with(op.enhanceType, op.intensity)
                 val result = EnhanceEngine.render(bitmap, values)
                 if (result != bitmap) bitmap.recycle()
                 result
             }
+
             is EditOperation.Crop -> {
                 val result = try {
                     val cropData = op.cropData ?: return bitmap
-                    val left   = (cropData.left   * bitmap.width ).toInt().coerceIn(0, bitmap.width)
-                    val top    = (cropData.top    * bitmap.height).toInt().coerceIn(0, bitmap.height)
-                    val right  = (cropData.right  * bitmap.width ).toInt().coerceIn(0, bitmap.width)
-                    val bottom = (cropData.bottom * bitmap.height).toInt().coerceIn(0, bitmap.height)
+                    val left = (cropData.left * bitmap.width).toInt().coerceIn(0, bitmap.width)
+                    val top = (cropData.top * bitmap.height).toInt().coerceIn(0, bitmap.height)
+                    val right = (cropData.right * bitmap.width).toInt().coerceIn(0, bitmap.width)
+                    val bottom =
+                        (cropData.bottom * bitmap.height).toInt().coerceIn(0, bitmap.height)
                     val w = (right - left).coerceAtLeast(1)
                     val h = (bottom - top).coerceAtLeast(1)
                     Bitmap.createBitmap(bitmap, left, top, w, h)
@@ -390,13 +402,16 @@ class EditorEngine(
                 if (result != bitmap) bitmap.recycle()
                 result
             }
+
             is EditOperation.Rotate -> {
                 var result = bitmap
                 if (op.rotation != 0f) {
                     result = try {
                         val matrix = Matrix().apply { postRotate(op.rotation) }
                         Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-                    } catch (e: Exception) { bitmap }
+                    } catch (e: Exception) {
+                        bitmap
+                    }
                 }
                 if (op.flipHorizontal || op.flipVertical) {
                     result = try {
@@ -408,16 +423,26 @@ class EditorEngine(
                                 result.height / 2f
                             )
                         }
-                        val flipped = Bitmap.createBitmap(result, 0, 0, result.width, result.height, matrix, true)
+                        val flipped = Bitmap.createBitmap(
+                            result,
+                            0,
+                            0,
+                            result.width,
+                            result.height,
+                            matrix,
+                            true
+                        )
                         if (result != bitmap) result.recycle()
                         flipped
-                    } catch (e: Exception) { result }
+                    } catch (e: Exception) {
+                        result
+                    }
                 }
                 if (result != bitmap) bitmap.recycle()
                 result
             }
+
             is EditOperation.Canvas -> {
-                // Apply canvas aspect ratio crop
                 val ratio = op.aspectRatio ?: return bitmap
                 val srcW = bitmap.width.toFloat()
                 val srcH = bitmap.height.toFloat()
@@ -437,20 +462,35 @@ class EditorEngine(
                 }
 
                 val result = try {
-                    Bitmap.createBitmap(bitmap, cropX, cropY, cropW.coerceAtLeast(1), cropH.coerceAtLeast(1))
+                    Bitmap.createBitmap(
+                        bitmap,
+                        cropX,
+                        cropY,
+                        cropW.coerceAtLeast(1),
+                        cropH.coerceAtLeast(1)
+                    )
                 } catch (e: Exception) {
                     bitmap
                 }
                 if (result != bitmap) bitmap.recycle()
                 result
             }
+
             is EditOperation.AddSticker -> drawStickerOnBitmap(bitmap, op.sticker)
             is EditOperation.UpdateSticker -> drawStickerOnBitmap(bitmap, op.sticker)
-            is EditOperation.RemoveSticker -> bitmap  // Layer removed in syncLayersFromOperations; replay skips it
+            is EditOperation.RemoveSticker -> bitmap
             is EditOperation.AddText -> drawTextOnBitmap(bitmap, op.text)
             is EditOperation.UpdateText -> drawTextOnBitmap(bitmap, op.text)
-            is EditOperation.RemoveText -> bitmap  // Layer removed in syncLayersFromOperations; replay skips it
-            is EditOperation.ApplyFrame -> drawFrameOnBitmap(bitmap, op.frame)
+            is EditOperation.RemoveText -> bitmap
+            is EditOperation.ApplyFrame -> {
+                val frame = op.frame
+                if (frame != null) {
+                    drawFrameOnBitmap(bitmap, frame)
+                } else {
+                    bitmap
+                }
+            }
+
             is EditOperation.Doodle -> drawDoodleOnBitmap(bitmap, op.path)
             is EditOperation.BackgroundRemoved -> {
                 val result = op.bitmap.copy(Bitmap.Config.ARGB_8888, true)
@@ -556,9 +596,15 @@ class EditorEngine(
 
                 val a = pC ushr 24 and 0xFF
 
-                val rC = ((pC ushr 16 and 0xFF) * center + ((pU ushr 16 and 0xFF) + (pD ushr 16 and 0xFF) + (pL ushr 16 and 0xFF) + (pR ushr 16 and 0xFF)) * edge).roundToInt().coerceIn(0, 255)
-                val gC = ((pC ushr 8 and 0xFF) * center + ((pU ushr 8 and 0xFF) + (pD ushr 8 and 0xFF) + (pL ushr 8 and 0xFF) + (pR ushr 8 and 0xFF)) * edge).roundToInt().coerceIn(0, 255)
-                val bC = ((pC and 0xFF) * center + ((pU and 0xFF) + (pD and 0xFF) + (pL and 0xFF) + (pR and 0xFF)) * edge).roundToInt().coerceIn(0, 255)
+                val rC =
+                    ((pC ushr 16 and 0xFF) * center + ((pU ushr 16 and 0xFF) + (pD ushr 16 and 0xFF) + (pL ushr 16 and 0xFF) + (pR ushr 16 and 0xFF)) * edge).roundToInt()
+                        .coerceIn(0, 255)
+                val gC =
+                    ((pC ushr 8 and 0xFF) * center + ((pU ushr 8 and 0xFF) + (pD ushr 8 and 0xFF) + (pL ushr 8 and 0xFF) + (pR ushr 8 and 0xFF)) * edge).roundToInt()
+                        .coerceIn(0, 255)
+                val bC =
+                    ((pC and 0xFF) * center + ((pU and 0xFF) + (pD and 0xFF) + (pL and 0xFF) + (pR and 0xFF)) * edge).roundToInt()
+                        .coerceIn(0, 255)
 
                 out[idx] = (a shl 24) or (rC shl 16) or (gC shl 8) or bC
             }
@@ -576,7 +622,15 @@ class EditorEngine(
         return result
     }
 
-    private fun applyEdgeSharpen(pixels: IntArray, out: IntArray, w: Int, h: Int, y: Int, center: Float, edge: Float) {
+    private fun applyEdgeSharpen(
+        pixels: IntArray,
+        out: IntArray,
+        w: Int,
+        h: Int,
+        y: Int,
+        center: Float,
+        edge: Float
+    ) {
         val yUp = if (y == 0) 0 else y - 1
         val yDown = if (y == h - 1) h - 1 else y + 1
         val yOffset = y * w
@@ -594,15 +648,30 @@ class EditorEngine(
             val pR = pixels[yOffset + xRight]
 
             val a = pC ushr 24 and 0xFF
-            val rC = ((pC ushr 16 and 0xFF) * center + ((pU ushr 16 and 0xFF) + (pD ushr 16 and 0xFF) + (pL ushr 16 and 0xFF) + (pR ushr 16 and 0xFF)) * edge).roundToInt().coerceIn(0, 255)
-            val gC = ((pC ushr 8 and 0xFF) * center + ((pU ushr 8 and 0xFF) + (pD ushr 8 and 0xFF) + (pL ushr 8 and 0xFF) + (pR ushr 8 and 0xFF)) * edge).roundToInt().coerceIn(0, 255)
-            val bC = ((pC and 0xFF) * center + ((pU and 0xFF) + (pD and 0xFF) + (pL and 0xFF) + (pR and 0xFF)) * edge).roundToInt().coerceIn(0, 255)
+            val rC =
+                ((pC ushr 16 and 0xFF) * center + ((pU ushr 16 and 0xFF) + (pD ushr 16 and 0xFF) + (pL ushr 16 and 0xFF) + (pR ushr 16 and 0xFF)) * edge).roundToInt()
+                    .coerceIn(0, 255)
+            val gC =
+                ((pC ushr 8 and 0xFF) * center + ((pU ushr 8 and 0xFF) + (pD ushr 8 and 0xFF) + (pL ushr 8 and 0xFF) + (pR ushr 8 and 0xFF)) * edge).roundToInt()
+                    .coerceIn(0, 255)
+            val bC =
+                ((pC and 0xFF) * center + ((pU and 0xFF) + (pD and 0xFF) + (pL and 0xFF) + (pR and 0xFF)) * edge).roundToInt()
+                    .coerceIn(0, 255)
 
             out[yOffset + x] = (a shl 24) or (rC shl 16) or (gC shl 8) or bC
         }
     }
 
-    private fun applyEdgePixel(pixels: IntArray, out: IntArray, w: Int, h: Int, x: Int, y: Int, center: Float, edge: Float) {
+    private fun applyEdgePixel(
+        pixels: IntArray,
+        out: IntArray,
+        w: Int,
+        h: Int,
+        x: Int,
+        y: Int,
+        center: Float,
+        edge: Float
+    ) {
         val yUp = if (y == 0) 0 else y - 1
         val yDown = if (y == h - 1) h - 1 else y + 1
         val xLeft = if (x == 0) 0 else x - 1
@@ -615,9 +684,15 @@ class EditorEngine(
         val pR = pixels[y * w + xRight]
 
         val a = pC ushr 24 and 0xFF
-        val rC = ((pC ushr 16 and 0xFF) * center + ((pU ushr 16 and 0xFF) + (pD ushr 16 and 0xFF) + (pL ushr 16 and 0xFF) + (pR ushr 16 and 0xFF)) * edge).roundToInt().coerceIn(0, 255)
-        val gC = ((pC ushr 8 and 0xFF) * center + ((pU ushr 8 and 0xFF) + (pD ushr 8 and 0xFF) + (pL ushr 8 and 0xFF) + (pR ushr 8 and 0xFF)) * edge).roundToInt().coerceIn(0, 255)
-        val bC = ((pC and 0xFF) * center + ((pU and 0xFF) + (pD and 0xFF) + (pL and 0xFF) + (pR and 0xFF)) * edge).roundToInt().coerceIn(0, 255)
+        val rC =
+            ((pC ushr 16 and 0xFF) * center + ((pU ushr 16 and 0xFF) + (pD ushr 16 and 0xFF) + (pL ushr 16 and 0xFF) + (pR ushr 16 and 0xFF)) * edge).roundToInt()
+                .coerceIn(0, 255)
+        val gC =
+            ((pC ushr 8 and 0xFF) * center + ((pU ushr 8 and 0xFF) + (pD ushr 8 and 0xFF) + (pL ushr 8 and 0xFF) + (pR ushr 8 and 0xFF)) * edge).roundToInt()
+                .coerceIn(0, 255)
+        val bC =
+            ((pC and 0xFF) * center + ((pU and 0xFF) + (pD and 0xFF) + (pL and 0xFF) + (pR and 0xFF)) * edge).roundToInt()
+                .coerceIn(0, 255)
 
         out[y * w + x] = (a shl 24) or (rC shl 16) or (gC shl 8) or bC
     }
@@ -636,24 +711,12 @@ class EditorEngine(
         return result
     }
 
-    /**
-     * Renders a sticker onto [bitmap].
-     *
-     * Stickers are emoji strings. Coordinates are NORMALIZED (0f..1f) and converted to
-     * pixel space against the actual bitmap dimensions so that the same StickerLayer renders
-     * correctly at preview AND at full export resolution.
-     *
-     * Emoji text size is derived from [StickerLayer.scale] * a base fraction of bitmap width,
-     * so that scale=1f gives a reasonably visible emoji and the result scales with the bitmap.
-     */
     private fun drawStickerOnBitmap(bitmap: Bitmap, sticker: StickerLayer): Bitmap {
         val result = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(result)
 
         try {
             if (sticker.emojiContent.isNotEmpty()) {
-                // Emoji sticker: render as text
-                // Base size is 10% of the bitmap width (scale=1.0 → 10% of width).
                 val baseEmojiSizePx = bitmap.width * 0.10f
                 val emojiSizePx = (baseEmojiSizePx * sticker.scale).coerceAtLeast(10f)
 
@@ -669,12 +732,10 @@ class EditorEngine(
                 canvas.save()
                 canvas.translate(pixelX, pixelY)
                 canvas.rotate(sticker.rotation)
-                // Draw at (0,0) since we already translated to center
                 canvas.drawText(sticker.emojiContent, 0f, 0f, paint)
                 canvas.restore()
 
             } else if (sticker.resourceId > 0) {
-                // Drawable resource sticker
                 @Suppress("DEPRECATION")
                 val drawable = context.resources.getDrawable(sticker.resourceId, null)
                 drawable?.let {
@@ -700,22 +761,10 @@ class EditorEngine(
         return result
     }
 
-    /**
-     * Renders a text layer onto [bitmap].
-     *
-     * Coordinates ([TextLayer.x], [TextLayer.y]) and [TextLayer.size] are NORMALIZED (0f..1f).
-     * Pixel position = normalized * bitmap dimension.
-     * Pixel text size = TextLayer.size * bitmap.width  (proportional to width).
-     *
-     * This ensures that a text element placed at e.g. (0.5, 0.5) always appears at the
-     * visual center, regardless of whether we're rendering to a 1080px preview or a 4000px
-     * export bitmap.
-     */
     private fun drawTextOnBitmap(bitmap: Bitmap, text: TextLayer): Bitmap {
         val result = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(result)
 
-        // Convert normalized size to pixels (fraction of bitmap width)
         val pixelSize = (text.size * bitmap.width).coerceAtLeast(8f)
         val pixelX = text.x * bitmap.width
         val pixelY = text.y * bitmap.height
@@ -739,7 +788,6 @@ class EditorEngine(
             canvas.save()
             canvas.rotate(text.rotation, pixelX, pixelY)
 
-            // Stroke/outline is drawn first, underneath the fill, when enabled.
             if (text.strokeWidth > 0f) {
                 val strokePaint = basePaint().apply {
                     style = Paint.Style.STROKE
@@ -764,11 +812,6 @@ class EditorEngine(
         return result
     }
 
-    /**
-     * Maps a [TextLayer.fontFamily] key (set by the Font tool in TextEditorBottomSheet) to a
-     * concrete [Typeface]. Only built-in Android font families are used — no bundled/proprietary
-     * font assets are introduced.
-     */
     private fun resolveTypeface(fontFamily: String?, isBold: Boolean, isItalic: Boolean): Typeface {
         val style = when {
             isBold && isItalic -> Typeface.BOLD_ITALIC
@@ -787,40 +830,91 @@ class EditorEngine(
         return Typeface.create(base, style)
     }
 
-    private fun drawFrameOnBitmap(bitmap: Bitmap, frame: FrameLayer?): Bitmap {
-        if (frame == null) return bitmap
-        val result = bitmap.copy(Bitmap.Config.ARGB_8888, true)
-        val canvas = Canvas(result)
-        try {
-            @Suppress("DEPRECATION")
-            val drawable = context.resources.getDrawable(frame.resourceId, null)
-            val padding = frame.padding.toInt()
-            drawable?.setBounds(padding, padding, bitmap.width - padding, bitmap.height - padding)
-            drawable?.draw(canvas)
+    /**
+     * FIXED: frame.padding was previously used as a raw pixel value directly against
+     * `bitmap.width`/`bitmap.height`. That works fine at PREVIEW resolution (~1080px, which is
+     * roughly what FrameBottomSheet.calculatePadding() was tuned for) but breaks at HIGH-RES
+     * EXPORT (bitmap can be 3000-4000px+): the same fixed pixel padding becomes a tiny sliver
+     * relative to the much larger bitmap, so setBounds() stretches the frame drawable across
+     * almost the entire image instead of leaving it as a thin border — i.e. the frame appears
+     * to cover the whole photo.
+     *
+     * Fix: treat frame.padding as calibrated against a REFERENCE width (1080px, matching where
+     * it's used/previewed), convert to a fraction of that reference, then scale the fraction
+     * against the actual target bitmap's width. This keeps the border proportionally the same
+     * size whether rendering a small preview or a full-resolution export — the same pattern
+     * already used for text size/position and doodle stroke width in this file.
+     */
+    private fun drawFrameOnBitmap(bitmap: Bitmap, frame: FrameLayer): Bitmap {
+        if (bitmap.isRecycled) return bitmap
+
+        return try {
+            // High-res export safety: Calculate scaling factor based on a 1080px base reference
+            val referenceDimension = 1080f
+            val minDimension = kotlin.math.min(bitmap.width, bitmap.height).toFloat()
+            val scaleFactor = (minDimension / referenceDimension).coerceAtLeast(1.0f)
+
+            // Dynamic padding computation
+            val basePadding = frame.padding
+            val leftPadding = (basePadding * scaleFactor).toInt()
+            val rightPadding = (basePadding * scaleFactor).toInt()
+            val topPadding = (basePadding * scaleFactor).toInt()
+            val bottomPadding = (basePadding * scaleFactor).toInt()
+
+            val resultWidth = bitmap.width + leftPadding + rightPadding
+            val resultHeight = bitmap.height + topPadding + bottomPadding
+
+            val result = Bitmap.createBitmap(resultWidth, resultHeight, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(result)
+
+            val frameColor = when (frame.resourceId) {
+                1 -> Color.parseColor("#8B4513") // Classic / Wood
+                2 -> Color.parseColor("#2C3E50") // Modern
+                3 -> Color.parseColor("#D4A574") // Vintage
+                4 -> Color.parseColor("#FFD700") // Gold
+                5 -> Color.parseColor("#C0C0C0") // Silver
+                6 -> Color.parseColor("#000000") // Black
+                7 -> Color.parseColor("#FFFFFF") // White
+                8 -> Color.parseColor("#F5F5DC") // Polaroid
+                else -> Color.WHITE
+            }
+
+            // 1. Fill base with outer frame color
+            canvas.drawColor(frameColor)
+
+            // 2. Draw original bitmap strictly positioned inside border
+            canvas.drawBitmap(bitmap, leftPadding.toFloat(), topPadding.toFloat(), null)
+
+            // 3. Add soft inner border shadow
+            val shadowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = Color.BLACK
+                alpha = 40
+                style = Paint.Style.STROKE
+                strokeWidth = (2f * scaleFactor).coerceAtLeast(1f)
+            }
+
+            canvas.drawRect(
+                leftPadding.toFloat(),
+                topPadding.toFloat(),
+                (leftPadding + bitmap.width).toFloat(),
+                (topPadding + bitmap.height).toFloat(),
+                shadowPaint
+            )
+
+            result
         } catch (e: Exception) {
             e.printStackTrace()
+            bitmap
         }
-        if (result != bitmap) bitmap.recycle()
-        return result
     }
 
-    /**
-     * Renders a single completed doodle stroke onto [bitmap].
-     *
-     * [DoodlePath] stores points/stroke-width in NORMALIZED space (0f..1f, relative to the
-     * canvas the stroke was originally captured on). Converting to pixel space here - against
-     * the actual target [bitmap]'s width/height - is what makes the exact same operation render
-     * correctly at preview resolution AND at full export resolution: a normalized x=0.5 always
-     * lands at bitmap.width/2, whatever that width is.
-     */
+
     private fun drawDoodleOnBitmap(bitmap: Bitmap, doodle: DoodlePath): Bitmap {
         if (doodle.points.isEmpty()) return bitmap
 
         val result = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(result)
 
-        // Stroke width is stored as a fraction of the reference canvas WIDTH; scale it against
-        // this bitmap's actual width so line thickness is visually consistent at any resolution.
         val pixelStrokeWidth = (doodle.strokeWidth * bitmap.width).coerceAtLeast(1f)
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -844,7 +938,6 @@ class EditorEngine(
                     for (i in 1 until doodle.points.size) {
                         path.lineTo(px(i), py(i))
                     }
-                    // A tap with a single point still needs to render as a dot.
                     if (doodle.points.size == 1) {
                         val cx = px(0)
                         val cy = py(0)
@@ -854,10 +947,12 @@ class EditorEngine(
                         canvas.drawPath(path, paint)
                     }
                 }
+
                 DoodleShapeType.LINE -> {
                     val last = doodle.points.size - 1
                     canvas.drawLine(px(0), py(0), px(last), py(last), paint)
                 }
+
                 DoodleShapeType.RECTANGLE -> {
                     val last = doodle.points.size - 1
                     val rect = RectF(
@@ -868,6 +963,7 @@ class EditorEngine(
                     )
                     canvas.drawRect(rect, paint)
                 }
+
                 DoodleShapeType.OVAL -> {
                     val last = doodle.points.size - 1
                     val rect = RectF(
