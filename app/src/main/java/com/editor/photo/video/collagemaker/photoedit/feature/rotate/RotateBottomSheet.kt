@@ -57,6 +57,7 @@ class RotateBottomSheet :
 
     override fun setupListeners() {
 
+        // ✅ Save canvas state ONLY when user clicks tick/check button
         binding.btnCheck.setOnClickListener {
             sessionViewModel.saveCanvasState()
             dismiss()
@@ -77,7 +78,6 @@ class RotateBottomSheet :
         binding.layoutRotate.setOnClickListener {
             hideAllSeekBars()
             rotateViewModel.rotate90()
-            sessionViewModel.rotate90()
         }
 
         binding.layoutAngle.setOnClickListener {
@@ -94,6 +94,7 @@ class RotateBottomSheet :
             )
         }
 
+        // ✅ FIX: onStopTrackingTouch se saveCanvasState() hata diya gaya hai
         binding.seekBarAngle.setOnSeekBarChangeListener(
             object : SeekBar.OnSeekBarChangeListener {
 
@@ -109,12 +110,11 @@ class RotateBottomSheet :
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
 
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                    sessionViewModel.saveCanvasState()
-                }
+                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
             }
         )
 
+        // ✅ FIX: onStopTrackingTouch se saveCanvasState() hata diya gaya hai
         binding.seekBarZoom.setOnSeekBarChangeListener(
             object : SeekBar.OnSeekBarChangeListener {
 
@@ -130,9 +130,7 @@ class RotateBottomSheet :
 
                 override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
 
-                override fun onStopTrackingTouch(seekBar: SeekBar?) {
-                    sessionViewModel.saveCanvasState()
-                }
+                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
             }
         )
     }

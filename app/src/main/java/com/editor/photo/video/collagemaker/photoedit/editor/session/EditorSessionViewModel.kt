@@ -23,6 +23,7 @@ import com.editor.photo.video.collagemaker.photoedit.domain.usecase.RedoUseCase
 import com.editor.photo.video.collagemaker.photoedit.domain.usecase.RemoveBackgroundUseCase
 import com.editor.photo.video.collagemaker.photoedit.domain.usecase.UndoUseCase
 import com.editor.photo.video.collagemaker.photoedit.editor.engine.EditOperation
+import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.EnhanceEngine
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.AdjustmentType
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.DoodlePath
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorEnhance
@@ -101,8 +102,8 @@ class EditorSessionViewModel @Inject constructor(
         refreshPreview()
     }
 
-    fun applyEnhance(enhanceType: EditorEnhance, intensity: Float) {
-        applyEnhanceUseCase(enhanceType, intensity)
+    fun applyEnhance(values: EnhanceEngine.EnhanceValues) {
+        applyEnhanceUseCase(values)
         refreshPreview()
     }
 
@@ -160,26 +161,46 @@ class EditorSessionViewModel @Inject constructor(
         if (state.rotation != 0f || state.flipHorizontal || state.flipVertical) {
             val op = EditOperation.Rotate(state.rotation, state.flipHorizontal, state.flipVertical)
             editorRepository.addOperation(op)
-            _editorState.value = state.copy(rotation = 0f, flipHorizontal = false, flipVertical = false)
+            viewModelScope.launch(Dispatchers.Default) {
+                val newState = computeEditingState()
+                withContext(Dispatchers.Main) {
+                    _editorState.value = _editorState.value.copy(
+                        rotation = 0f,
+                        flipHorizontal = false,
+                        flipVertical = false
+                    )
+                    _uiState.value = newState
+                }
+            }
+        }
+        if (state.canvasZoom != 1f) {
+            val zoomOp = EditOperation.Canvas(state.aspectRatio, state.canvasZoom, state.imageTranslationX)
+            editorRepository.addOperation(zoomOp)
+            _editorState.value = _editorState.value.copy(canvasZoom = 1f)
             refreshPreview()
         }
+    }
+
+    private suspend fun computeEditingState(): EditorUiState.Editing {
+        val activeId = _activeTextId.value
+        val preview = editorRepository.renderPreview(excludeTextId = activeId)
+        val original = editorRepository.getOriginalBitmap()
+        val canUndo = editorRepository.canUndo()
+        val canRedo = editorRepository.canRedo()
+        return EditorUiState.Editing(
+            previewBitmap = preview,
+            canUndo = canUndo,
+            canRedo = canRedo,
+            originalBitmap = original
+        )
     }
 
     fun refreshPreview() {
         android.util.Log.d("TXT_DBG", "refreshPreview called", Throwable())
         viewModelScope.launch(Dispatchers.Default) {
-            val activeId = _activeTextId.value
-            val preview = editorRepository.renderPreview(excludeTextId = activeId)
-            val original = editorRepository.getOriginalBitmap()
-            val canUndo = editorRepository.canUndo()
-            val canRedo = editorRepository.canRedo()
+            val newState = computeEditingState()
             withContext(Dispatchers.Main) {
-                _uiState.value = EditorUiState.Editing(
-                    previewBitmap = preview,
-                    canUndo = canUndo,
-                    canRedo = canRedo,
-                    originalBitmap = original
-                )
+                _uiState.value = newState
             }
         }
     }

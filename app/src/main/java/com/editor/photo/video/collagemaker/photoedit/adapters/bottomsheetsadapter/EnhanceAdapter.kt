@@ -163,7 +163,7 @@ class EnhanceAdapter(
     }
 
     companion object {
-        /** Renders tool@strength against the already-small [base] and center-crops down to exactly [targetSize] — the downsample-in step that keeps thumbnails sharp instead of soft/pixelated. */
+
         private fun generateEnhancePreview(
             base: Bitmap,
             tool: EditorEnhance,

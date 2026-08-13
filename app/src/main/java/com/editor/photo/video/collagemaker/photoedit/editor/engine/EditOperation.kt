@@ -2,10 +2,10 @@ package com.editor.photo.video.collagemaker.photoedit.editor.engine
 
 import android.graphics.Bitmap
 import android.net.Uri
+import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.EnhanceEngine
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.AdjustmentType
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorFilter
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EffectType
-import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorEnhance
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.StickerLayer
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextLayer
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.FrameLayer
@@ -16,7 +16,7 @@ sealed class EditOperation {
     data class Adjust(val adjustments: Map<AdjustmentType, Int>) : EditOperation()
     data class Filter(val filter: EditorFilter, val intensity: Int) : EditOperation()
     data class Effect(val effectType: EffectType, val intensity: Float) : EditOperation()
-    data class Enhance(val enhanceType: EditorEnhance, val intensity: Float) : EditOperation()
+    data class Enhance(val values: EnhanceEngine.EnhanceValues) : EditOperation()
     data class Crop(val croppedUri: Uri, val cropData: CropData? = null) : EditOperation()
     data class Rotate(val rotation: Float, val flipHorizontal: Boolean, val flipVertical: Boolean) : EditOperation()
     data class Canvas(val aspectRatio: Float?, val zoom: Float, val translationX: Float) : EditOperation()

@@ -3,7 +3,6 @@ package com.editor.photo.video.collagemaker.photoedit.editor.engine
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.Matrix
 import android.graphics.Paint
@@ -27,6 +26,7 @@ import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.Sticker
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextLayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.roundToInt
 
 class EditorEngine(
@@ -37,6 +37,8 @@ class EditorEngine(
     private val imageProcessor = ImageProcessor(context)
     private var baseUri: Uri? = null
     private var originalBitmap: Bitmap? = null
+
+    private val renderGeneration = AtomicLong(0L)
 
     suspend fun initialize(uri: Uri) = withContext(Dispatchers.IO) {
         baseUri = uri
@@ -55,7 +57,19 @@ class EditorEngine(
     fun getOriginalBitmap(): Bitmap? = originalBitmap
 
     fun addOperation(operation: EditOperation) {
-        historyManager.addOperation(operation)
+        if (operation is EditOperation.Enhance) {
+            val current = historyManager.getActiveOperations()
+            val existingIndex = current.indexOfLast { it is EditOperation.Enhance }
+            if (existingIndex >= 0) {
+                val updated = current.toMutableList()
+                updated[existingIndex] = operation
+                historyManager.setOperations(updated)
+            } else {
+                historyManager.addOperation(operation)
+            }
+        } else {
+            historyManager.addOperation(operation)
+        }
         syncLayersFromOperations()
     }
 
@@ -203,16 +217,20 @@ class EditorEngine(
                     )
                 }
 
-                else -> { /* Non-layer operations (Adjust, Filter, Crop, Rotate, etc.) */
+                else -> { /* Non-layer operations (Adjust, Filter, Enhance, Crop, Rotate, etc.) */
                 }
             }
         }
     }
 
+
     suspend fun renderPreview(widthLimit: Int = 1080, excludeTextId: String? = null): Bitmap? =
         withContext(Dispatchers.Default) {
+            val myGeneration = renderGeneration.incrementAndGet()
+
             val original = originalBitmap ?: return@withContext null
             if (original.isRecycled) return@withContext null
+            if (myGeneration != renderGeneration.get()) return@withContext null
 
             var rendered = original.copy(Bitmap.Config.ARGB_8888, true)
             val filteredOps = historyManager.getActiveOperations().filter { op ->
@@ -229,18 +247,31 @@ class EditorEngine(
             val ops = consolidateOperations(filteredOps)
 
             for (op in ops) {
+                if (myGeneration != renderGeneration.get()) {
+                    if (!rendered.isRecycled) rendered.recycle()
+                    return@withContext null
+                }
                 rendered = applyOperationOnBitmap(rendered, op, isPreview = true) ?: rendered
+            }
+
+            if (myGeneration != renderGeneration.get()) {
+                if (!rendered.isRecycled) rendered.recycle()
+                return@withContext null
             }
 
             rendered
         }
 
+
     suspend fun renderPreviewWithoutFrame(
         widthLimit: Int = 1080,
         excludeTextId: String? = null
     ): Bitmap? = withContext(Dispatchers.Default) {
+        val myGeneration = renderGeneration.incrementAndGet()
+
         val original = originalBitmap ?: return@withContext null
         if (original.isRecycled) return@withContext null
+        if (myGeneration != renderGeneration.get()) return@withContext null
 
         var rendered = original.copy(Bitmap.Config.ARGB_8888, true)
         val filteredOps = historyManager.getActiveOperations().filter { op ->
@@ -258,7 +289,16 @@ class EditorEngine(
         val ops = consolidateOperations(filteredOps)
 
         for (op in ops) {
+            if (myGeneration != renderGeneration.get()) {
+                if (!rendered.isRecycled) rendered.recycle()
+                return@withContext null
+            }
             rendered = applyOperationOnBitmap(rendered, op, isPreview = true) ?: rendered
+        }
+
+        if (myGeneration != renderGeneration.get()) {
+            if (!rendered.isRecycled) rendered.recycle()
+            return@withContext null
         }
 
         rendered
@@ -298,7 +338,7 @@ class EditorEngine(
                 is EditOperation.AddSticker -> latestStickerMap[op.sticker.id] = op
                 is EditOperation.UpdateSticker -> latestStickerMap[op.sticker.id] = op
                 is EditOperation.RemoveSticker -> latestStickerMap.remove(op.stickerId)
-                is EditOperation.ApplyFrame -> latestFrameOp = op   // ➕ naya — sirf latest rakho
+                is EditOperation.ApplyFrame -> latestFrameOp = op
                 else -> result.add(op)
             }
         }
@@ -383,8 +423,10 @@ class EditorEngine(
             }
 
             is EditOperation.Enhance -> {
-                val values = EnhanceEngine.EnhanceValues().with(op.enhanceType, op.intensity)
-                val result = EnhanceEngine.render(bitmap, values)
+                // Complete 13-value snapshot rendered ONCE against whatever bitmap this
+                // operation is being applied to in the chain (original for preview/export).
+                // Never reconstructed from a single tool/intensity pair anymore.
+                val result = EnhanceEngine.render(bitmap, op.values)
                 if (result != bitmap) bitmap.recycle()
                 result
             }
@@ -854,7 +896,6 @@ class EditorEngine(
             val result = Bitmap.createBitmap(resultWidth, resultHeight, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(result)
 
-            // 1. Frame drawable PEHLE draw karo (background/base ki tarah)
             val frameDrawable = try {
                 androidx.core.content.ContextCompat.getDrawable(context, frame.resourceId)
             } catch (e: Exception) {
@@ -865,7 +906,6 @@ class EditorEngine(
                 frameDrawable.draw(canvas)
             }
 
-            // 2. Image UPAR draw karo — is se image hamesha dikhegi, chahe frame transparent ho ya na ho
             canvas.drawBitmap(bitmap, leftPadding.toFloat(), topPadding.toFloat(), null)
 
             result
@@ -873,7 +913,7 @@ class EditorEngine(
             e.printStackTrace()
             bitmap
         }
-    
+
 
     }
 

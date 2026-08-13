@@ -90,8 +90,6 @@ class PhotoStudioFragment :
 
     private lateinit var scaleDetector: ScaleGestureDetector
     private var progressDialog: Dialog? = null
-
-    // ── Real interactive text overlay (PART 4) ──────────────────────────────
     private var textOverlayView: TextOverlayView? = null
     private var isOverlayTransforming = false
 
@@ -108,6 +106,7 @@ class PhotoStudioFragment :
         setupGestureDetectors()
         setupBackPressHandler()
         observeUiState()
+        observeEditorState()
         observeActiveTool()
         observeActiveText()
         loadInitialImage()
@@ -261,6 +260,14 @@ class PhotoStudioFragment :
                         showToast(state.message)
                     }
                 }
+            }
+        }
+    }
+
+    private fun observeEditorState() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.editorState.collectLatest {
+                applyCurrentTransforms()
             }
         }
     }

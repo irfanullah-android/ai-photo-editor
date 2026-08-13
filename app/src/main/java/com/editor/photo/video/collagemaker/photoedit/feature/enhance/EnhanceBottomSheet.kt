@@ -3,11 +3,9 @@ package com.editor.photo.video.collagemaker.photoedit.feature.enhance
 import android.app.Dialog
 import android.content.DialogInterface
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Rect
-import android.graphics.drawable.BitmapDrawable
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.LayoutInflater
@@ -15,9 +13,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.SeekBar
+import android.graphics.drawable.BitmapDrawable
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -28,6 +29,7 @@ import com.editor.photo.video.collagemaker.photoedit.editor.session.EditorSessio
 import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.EnhanceEngine
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorEnhance
 import kotlinx.coroutines.*
+import java.util.concurrent.atomic.AtomicLong
 
 class EnhanceBottomSheet : BottomSheetDialogFragment() {
 
@@ -52,6 +54,27 @@ class EnhanceBottomSheet : BottomSheetDialogFragment() {
     private var renderJob: Job? = null
     private var lastBitmap: Bitmap? = null
 
+    /**
+     * True once the FIRST toolValues emission has been consumed. StateFlow
+     * replays its current value to a fresh collector immediately on
+     * subscribe — this flag lets us skip that replay so opening the sheet
+     * never renders on its own. Only a real value change (from
+     * updateValue(), i.e. an actual slider drag) after this point renders.
+     */
+    private var toolValuesInitialized = false
+
+    /**
+     * Monotonically increasing token for race-safety. Every call to
+     * applyEnhance() claims the next token; only the render whose token
+     * still matches [renderToken] at completion time is allowed to touch
+     * the ImageView or lastBitmap. This guarantees "latest value always
+     * wins" even under rapid slider drags where multiple coroutines may be
+     * mid-render simultaneously — stronger than relying on isActive alone,
+     * since isActive only reflects cancellation, not "am I still the
+     * newest request."
+     */
+    private val renderToken = AtomicLong(0L)
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
         dialog.window?.setDimAmount(0f)
@@ -67,27 +90,52 @@ class EnhanceBottomSheet : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        loadOriginalBitmap()
-        setupEnhanceNamesRecyclerView()
-        setupEnhancePreviewsRecyclerView()
-        setupSeekBar()
-        setupTopBar()
-        observeViewModel()
-        
-        binding.intensityContainer.visibility = View.VISIBLE
-        binding.seekBarEnhance.visibility = View.VISIBLE
+
+        // Hide UI controls briefly while bitmap loads off-thread to prevent UI jank
+        binding.intensityContainer.visibility = View.GONE
+        binding.seekBarEnhance.visibility = View.GONE
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            loadOriginalBitmapAsync()
+            setupEnhanceNamesRecyclerView()
+            setupEnhancePreviewsRecyclerView()
+            setupSeekBar()
+            setupTopBar()
+            observeViewModel()
+
+            binding.intensityContainer.visibility = View.VISIBLE
+            binding.seekBarEnhance.visibility = View.VISIBLE
+
+            // Sync seekbar instantly for initial selected tool
+            updateSeekBarValue(enhanceViewModel.selectedTool.value)
+        }
     }
 
-    private fun loadOriginalBitmap() {
-        try {
-            baselineBitmap = (imageView?.drawable as? BitmapDrawable)?.bitmap
-            originalBitmap = sourceBitmap ?: baselineBitmap ?: imageUri?.let {
-                @Suppress("DEPRECATION")
-                MediaStore.Images.Media.getBitmap(requireContext().contentResolver, it)
+    private suspend fun loadOriginalBitmapAsync() {
+        withContext(Dispatchers.IO) {
+            try {
+                baselineBitmap = withContext(Dispatchers.Main) {
+                    (imageView?.drawable as? BitmapDrawable)?.bitmap
+                }
+
+                val rawBitmap = sourceBitmap ?: baselineBitmap ?: imageUri?.let { uri ->
+                    val context = context ?: return@let null
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        val source = ImageDecoder.createSource(context.contentResolver, uri)
+                        ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+                            decoder.isMutableRequired = true
+                        }
+                    } else {
+                        @Suppress("DEPRECATION")
+                        MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+                    }
+                }
+
+                originalBitmap = rawBitmap
+                previewBitmap = rawBitmap?.let { buildPreviewBitmap(it) }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-            previewBitmap = originalBitmap?.let { buildPreviewBitmap(it) }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 
@@ -98,25 +146,6 @@ class EnhanceBottomSheet : BottomSheetDialogFragment() {
         val w = (source.width * scale).toInt().coerceAtLeast(1)
         val h = (source.height * scale).toInt().coerceAtLeast(1)
         return Bitmap.createScaledBitmap(source, w, h, true)
-    }
-
-    private fun matchOriginalSize(bitmap: Bitmap): Bitmap {
-        val original = originalBitmap ?: return bitmap
-        if (bitmap.width == original.width && bitmap.height == original.height) return bitmap
-
-        val matched = Bitmap.createBitmap(
-            original.width, original.height, bitmap.config ?: Bitmap.Config.ARGB_8888
-        )
-        val canvas = Canvas(matched)
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-        val srcRect = Rect(0, 0, bitmap.width, bitmap.height)
-        val dstRect = Rect(0, 0, original.width, original.height)
-        canvas.drawBitmap(bitmap, srcRect, dstRect, paint)
-
-        if (bitmap != original && bitmap != previewBitmap) {
-            bitmap.recycle()
-        }
-        return matched
     }
 
     private fun setupEnhanceNamesRecyclerView() {
@@ -151,15 +180,22 @@ class EnhanceBottomSheet : BottomSheetDialogFragment() {
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
+                // Bounded preview only — seekbar release must never trigger a
+                // full-resolution render (previewBitmap source, no size branching).
                 applyEnhance(activeValues(), debounce = false)
             }
         })
     }
 
+    /**
+     * Returns the COMPLETE 13-value Enhance snapshot built from every tool
+     * currently held in EnhanceViewModel.toolValues — not just the selected
+     * tool. Used for live preview, quick color-filter preview, and the final
+     * Done commit, so all three always agree, and so switching tools always
+     * shows every previously-applied value at once.
+     */
     private fun activeValues(): EnhanceEngine.EnhanceValues {
-        val tool = enhanceViewModel.selectedTool.value
-        val value = enhanceViewModel.toolValues.value[tool] ?: 0f
-        return EnhanceEngine.EnhanceValues().with(tool, value)
+        return enhanceViewModel.buildEnhanceValues()
     }
 
     private fun updateSeekBarValue(tool: EditorEnhance) {
@@ -179,39 +215,68 @@ class EnhanceBottomSheet : BottomSheetDialogFragment() {
             }
 
             wasApplied = true
-            sessionViewModel.applyEnhance(
-                enhanceViewModel.selectedTool.value,
-                enhanceViewModel.toolValues.value[enhanceViewModel.selectedTool.value] ?: 0f
-            )
+            // ONE complete snapshot committed as ONE EditOperation.Enhance.
+            // EditorEngine.addOperation() replaces any existing Enhance op
+            // in place, so this stays a single history entry no matter how
+            // many times Enhance is reopened and edited.
+            sessionViewModel.applyEnhance(values)
             dismiss()
         }
     }
 
     private fun observeViewModel() {
-        lifecycleScope.launchWhenStarted {
-            enhanceViewModel.selectedTool.collect { tool ->
-                updateSeekBarValue(tool)
-                applyEnhance(activeValues(), debounce = false)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    enhanceViewModel.selectedTool.collect { tool ->
+                        // Sync SeekBar UI to selected tool's value
+                        updateSeekBarValue(tool)
 
-                val position = EditorEnhance.values().indexOf(tool)
-                enhanceAdapter?.updateSelection(position)
-                enhanceNamesAdapter?.updateSelection(position)
-                binding.rvEnhanceOptions.smoothScrollToPosition(position)
-                binding.rvEnhanceNames.smoothScrollToPosition(position)
-            }
-        }
+                        val position = EditorEnhance.values().indexOf(tool)
+                        enhanceAdapter?.updateSelection(position)
+                        enhanceNamesAdapter?.updateSelection(position)
+                        binding.rvEnhanceOptions.smoothScrollToPosition(position)
+                        binding.rvEnhanceNames.smoothScrollToPosition(position)
 
-        lifecycleScope.launchWhenStarted {
-            enhanceViewModel.toolValues.collect { valuesMap ->
-                val tool = enhanceViewModel.selectedTool.value
-                val value = valuesMap[tool] ?: 0f
-                imageView?.colorFilter = EnhanceEngine.quickPreviewFilter(activeValues())
-                applyEnhance(activeValues(), debounce = true)
+                        // Immediately show full active state preview upon switching tools
+                        applyEnhance(activeValues(), debounce = false)
+                    }
+                }
+
+                launch {
+                    enhanceViewModel.toolValues.collect {
+                        // Skip the very first emission (StateFlow replay on
+                        // subscribe) so opening the sheet never renders on its own.
+                        if (!toolValuesInitialized) {
+                            toolValuesInitialized = true
+                            return@collect
+                        }
+                        // Real value change from an actual slider drag — this is
+                        // the ONLY place a render/preview-image change happens,
+                        // always using the complete current Enhance state.
+                        imageView?.colorFilter = EnhanceEngine.quickPreviewFilter(activeValues())
+                        applyEnhance(activeValues(), debounce = true)
+                    }
+                }
             }
         }
     }
 
+    /**
+     * Renders the complete Enhance snapshot against the BOUNDED preview
+     * bitmap only — full-resolution rendering never happens here. It
+     * happens once, later, through EditorEngine's existing preview/export
+     * pipeline after Done commits the EditOperation.Enhance.
+     *
+     * Race-safety: claims a fresh [renderToken] before launching. The
+     * coroutine only applies its result to the ImageView / lastBitmap if
+     * its token is STILL the newest one when it finishes — any older,
+     * slower render is silently dropped and its bitmap recycled, even if
+     * it happens to finish after being technically cancelled. This gives
+     * a hard "latest value always wins" guarantee under rapid dragging.
+     */
     private fun applyEnhance(values: EnhanceEngine.EnhanceValues, debounce: Boolean) {
+        val myToken = renderToken.incrementAndGet()
         renderJob?.cancel()
 
         if (values.isIdentity()) {
@@ -223,41 +288,33 @@ class EnhanceBottomSheet : BottomSheetDialogFragment() {
             return
         }
 
-        val source = if (debounce) (previewBitmap ?: originalBitmap) else originalBitmap
-        val bitmap = source ?: return
+        val bitmap = previewBitmap ?: originalBitmap ?: return
 
         renderJob = coroutineScope.launch {
             try {
                 if (debounce) {
                     delay(16)
                 }
+                if (myToken != renderToken.get()) return@launch
                 if (!isActive) return@launch
 
                 val rendered = EnhanceEngine.render(bitmap, values)
 
-                if (!isActive) {
+                if (myToken != renderToken.get() || !isActive) {
                     rendered.recycle()
                     return@launch
                 }
 
-                val displayBitmap = matchOriginalSize(rendered)
-
-                if (!isActive) {
-                    if (displayBitmap != rendered) rendered.recycle()
-                    displayBitmap.recycle()
-                    return@launch
-                }
-
                 withContext(Dispatchers.Main) {
-                    if (!isActive) {
-                        displayBitmap.recycle()
+                    if (myToken != renderToken.get() || !isActive) {
+                        rendered.recycle()
                         return@withContext
                     }
                     imageView?.colorFilter = null
-                    imageView?.setImageBitmap(displayBitmap)
+                    imageView?.setImageBitmap(rendered)
                     val oldBitmap = lastBitmap
-                    lastBitmap = displayBitmap
-                    recycleIfSafe(oldBitmap, displayBitmap)
+                    lastBitmap = rendered
+                    recycleIfSafe(oldBitmap, rendered)
                 }
             } catch (e: CancellationException) {
                 // Ignore

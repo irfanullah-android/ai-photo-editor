@@ -104,16 +104,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:background="@android:color/transparent"
-                app:photo_src="@null" />
+                app:photo_src="@null" >
 
-            <FrameLayout
-                android:id="@+id/textOverlayContainer"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:clipChildren="false"
-                android:clipToPadding="false"
-                android:elevation="20dp"
-                android:translationZ="20dp" />
+                <FrameLayout
+                    android:id="@+id/textOverlayContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:elevation="20dp"
+                    android:translationZ="20dp" />
+            </ja.burhanrashid52.photoeditor.PhotoEditorView>
 
             <ProgressBar
                 android:id="@+id/progressBar"

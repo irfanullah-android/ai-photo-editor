@@ -1,6 +1,7 @@
 package com.editor.photo.video.collagemaker.photoedit.feature.enhance
 
 import androidx.lifecycle.ViewModel
+import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.EnhanceEngine
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorEnhance
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,5 +27,14 @@ class EnhanceViewModel : ViewModel() {
         val current = _toolValues.value.toMutableMap()
         current[tool] = value
         _toolValues.value = current
+    }
+
+
+    fun buildEnhanceValues(): EnhanceEngine.EnhanceValues {
+        var values = EnhanceEngine.EnhanceValues()
+        for ((tool, value) in _toolValues.value) {
+            values = values.with(tool, value)
+        }
+        return values
     }
 }

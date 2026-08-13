@@ -26,15 +26,16 @@ class SplashFragment : BaseFragment<FragmentSplashBinding>(R.layout.fragment_spl
     private fun navigateScreen() {
         val context = requireContext()
 
-        if (SharedPreference.isLanguageSelected(context)) {
-            if (!SharedPreference.isOnBoardingShown(context)) {
-                navigateTo(R.id.splashFragment, R.id.action_splashFragment_to_onBoardingFragment)
-            } else {
-                // ✅ Directly MainActivity — no permission screen
-                CommonData.navigateToActivity(requireContext(), MainActivity::class.java)
-            }
+        if (SharedPreference.isOnBoardingShown(context)) {
+            CommonData.navigateToActivity(
+                context,
+                MainActivity::class.java
+            )
         } else {
-            navigateTo(R.id.splashFragment, R.id.action_splashFragment_to_languageFragment)
+            navigateTo(
+                R.id.splashFragment,
+                R.id.action_splashFragment_to_languageFragment
+            )
         }
     }
 }
