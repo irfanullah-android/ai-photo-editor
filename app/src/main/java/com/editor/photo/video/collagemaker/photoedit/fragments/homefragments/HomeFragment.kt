@@ -404,12 +404,12 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(R.layout.fragment_home) {
     }
 
     private fun getSmallIcons(): List<SmallIconItem> = listOf(
-        SmallIconItem(
+       /* SmallIconItem(
             id = 1,
             iconRes = R.drawable.ic_canvas,
             label = getString(R.string.label_canvas),
             tag = "Canvas"
-        ),
+        ),*/
         SmallIconItem(
             id = 2,
             iconRes = R.drawable.ic_filter,
@@ -446,12 +446,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(R.layout.fragment_home) {
             label = getString(R.string.label_remove),
             tag = "Remove"
         ),
-        SmallIconItem(
-            id = 8,
-            iconRes = R.drawable.ic_enhance,
-            label = getString(R.string.label_enhance),
-            tag = "Enhance"
-        ),
+
         SmallIconItem(
             id = 9,
             iconRes = R.drawable.ic_doodle,

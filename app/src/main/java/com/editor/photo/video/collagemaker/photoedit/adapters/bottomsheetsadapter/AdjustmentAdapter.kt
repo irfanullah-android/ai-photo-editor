@@ -1,4 +1,5 @@
 package com.editor.photo.video.collagemaker.photoedit.adapters.bottomsheetsadapter
+
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat

@@ -19,7 +19,9 @@ class BrushTypeAdapter(
     fun updateColor(color: Int) {
         if (this.currentColor != color) {
             this.currentColor = color
-            notifyItemChanged(selectedPosition)
+            if (selectedPosition in brushItems.indices) {
+                notifyItemChanged(selectedPosition)
+            }
         }
     }
 
@@ -29,21 +31,14 @@ class BrushTypeAdapter(
         fun bind(brushItem: BrushItem, isSelected: Boolean) {
             binding.ivBrushIcon.setImageResource(brushItem.icon)
 
-            // Smooth scale and alpha animations
-            val targetAlpha = if (isSelected) 1f else 0.4f
-            val targetScale = if (isSelected) 1.15f else 1.0f
+            // Direct state setting for zero-lag rendering
+            binding.root.alpha = if (isSelected) 1.0f else 0.4f
+            binding.root.scaleX = if (isSelected) 1.1f else 1.0f
+            binding.root.scaleY = if (isSelected) 1.1f else 1.0f
 
-            binding.root.animate()
-                .alpha(targetAlpha)
-                .scaleX(targetScale)
-                .scaleY(targetScale)
-                .setDuration(150)
-                .start()
-
-            // Dynamic selection background coloring
-            val background = binding.root.background?.mutate() as? GradientDrawable
-            if (background != null) {
-                val density = binding.root.context.resources.displayMetrics.density
+            // Clean background highlight
+            (binding.root.background?.mutate() as? GradientDrawable)?.let { background ->
+                val density = binding.root.resources.displayMetrics.density
                 if (isSelected) {
                     background.setColor(Color.parseColor("#33FFFFFF"))
                     background.setStroke((2 * density).toInt(), currentColor)
@@ -54,11 +49,15 @@ class BrushTypeAdapter(
             }
 
             binding.root.setOnClickListener {
-                if (selectedPosition != adapterPosition) {
-                    val oldPosition = selectedPosition
-                    selectedPosition = adapterPosition
-                    notifyItemChanged(oldPosition)
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION && selectedPosition != position) {
+                    val previousSelected = selectedPosition
+                    selectedPosition = position
+
+                    // Synchronous dispatch - immediate UI feedback
+                    notifyItemChanged(previousSelected)
                     notifyItemChanged(selectedPosition)
+
                     onBrushSelected(brushItem)
                 }
             }
@@ -78,5 +77,5 @@ class BrushTypeAdapter(
         holder.bind(brushItems[position], position == selectedPosition)
     }
 
-    override fun getItemCount() = brushItems.size
+    override fun getItemCount(): Int = brushItems.size
 }

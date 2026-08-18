@@ -12,7 +12,6 @@ import com.editor.photo.video.collagemaker.photoedit.domain.usecase.ApplyAdjustm
 import com.editor.photo.video.collagemaker.photoedit.domain.usecase.ApplyCropUseCase
 import com.editor.photo.video.collagemaker.photoedit.domain.usecase.ApplyDoodleUseCase
 import com.editor.photo.video.collagemaker.photoedit.domain.usecase.ApplyEffectUseCase
-import com.editor.photo.video.collagemaker.photoedit.domain.usecase.ApplyEnhanceUseCase
 import com.editor.photo.video.collagemaker.photoedit.domain.usecase.ApplyFilterUseCase
 import com.editor.photo.video.collagemaker.photoedit.domain.usecase.ApplyFrameUseCase
 import com.editor.photo.video.collagemaker.photoedit.domain.usecase.ApplyStickerUseCase
@@ -23,10 +22,8 @@ import com.editor.photo.video.collagemaker.photoedit.domain.usecase.RedoUseCase
 import com.editor.photo.video.collagemaker.photoedit.domain.usecase.RemoveBackgroundUseCase
 import com.editor.photo.video.collagemaker.photoedit.domain.usecase.UndoUseCase
 import com.editor.photo.video.collagemaker.photoedit.editor.engine.EditOperation
-import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.EnhanceEngine
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.AdjustmentType
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.DoodlePath
-import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorEnhance
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorFilter
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorState
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorUiState
@@ -37,6 +34,7 @@ import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextLay
 import com.editor.photo.video.collagemaker.photoedit.models.gallery.EditorTool
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -57,7 +55,6 @@ class EditorSessionViewModel @Inject constructor(
     private val applyAdjustmentUseCase: ApplyAdjustmentUseCase,
     private val applyEffectUseCase: ApplyEffectUseCase,
     private val applyFilterUseCase: ApplyFilterUseCase,
-    private val applyEnhanceUseCase: ApplyEnhanceUseCase,
     private val applyFrameUseCase: ApplyFrameUseCase,
     private val removeBackgroundUseCase: RemoveBackgroundUseCase,
     private val exportImageUseCase: ExportImageUseCase,
@@ -78,49 +75,63 @@ class EditorSessionViewModel @Inject constructor(
     private val _activeTextId = MutableStateFlow<String?>(null)
     val activeTextId: StateFlow<String?> = _activeTextId.asStateFlow()
 
+    private val _activeStickerId = MutableStateFlow<String?>(null)
+    val activeStickerId: StateFlow<String?> = _activeStickerId.asStateFlow()
+
+    private var refreshJob: Job? = null
+
     fun loadImage(uri: Uri) {
-        viewModelScope.launch {
-            _uiState.value = EditorUiState.Loading
+        viewModelScope.launch(Dispatchers.Default) {
+            withContext(Dispatchers.Main) { _uiState.value = EditorUiState.Loading }
             loadImageUseCase(uri)
-            _editorState.value = EditorState(baseImageUri = uri.toString())
-            refreshPreview()
+            withContext(Dispatchers.Main) {
+                _editorState.value = EditorState(baseImageUri = uri.toString())
+            }
+            refreshPreviewInternal()
         }
     }
 
     fun applyAdjustment(adjustments: Map<AdjustmentType, Int>) {
-        applyAdjustmentUseCase(adjustments)
-        refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            applyAdjustmentUseCase(adjustments)
+            refreshPreviewInternal()
+        }
     }
 
     fun applyEffect(effectType: EffectType, intensity: Float) {
-        applyEffectUseCase(effectType, intensity)
-        refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            applyEffectUseCase(effectType, intensity)
+            refreshPreviewInternal()
+        }
     }
 
     fun applyFilter(filter: EditorFilter, intensity: Int) {
-        applyFilterUseCase(filter, intensity)
-        refreshPreview()
-    }
-
-    fun applyEnhance(values: EnhanceEngine.EnhanceValues) {
-        applyEnhanceUseCase(values)
-        refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            applyFilterUseCase(filter, intensity)
+            refreshPreviewInternal()
+        }
     }
 
     fun applyFrame(frame: FrameLayer?) {
-        applyFrameUseCase(frame)
-        refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            applyFrameUseCase(frame)
+            refreshPreviewInternal()
+        }
     }
 
     fun undo() {
-        if (undoUseCase()) {
-            refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            if (undoUseCase()) {
+                refreshPreviewInternal()
+            }
         }
     }
 
     fun redo() {
-        if (redoUseCase()) {
-            refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            if (redoUseCase()) {
+                refreshPreviewInternal()
+            }
         }
     }
 
@@ -158,32 +169,36 @@ class EditorSessionViewModel @Inject constructor(
 
     fun saveCanvasState() {
         val state = _editorState.value
-        if (state.rotation != 0f || state.flipHorizontal || state.flipVertical) {
-            val op = EditOperation.Rotate(state.rotation, state.flipHorizontal, state.flipVertical)
-            editorRepository.addOperation(op)
-            viewModelScope.launch(Dispatchers.Default) {
-                val newState = computeEditingState()
+        viewModelScope.launch(Dispatchers.Default) {
+            if (state.rotation != 0f || state.flipHorizontal || state.flipVertical) {
+                val op = EditOperation.Rotate(state.rotation, state.flipHorizontal, state.flipVertical)
+                editorRepository.addOperation(op)
                 withContext(Dispatchers.Main) {
                     _editorState.value = _editorState.value.copy(
                         rotation = 0f,
                         flipHorizontal = false,
                         flipVertical = false
                     )
-                    _uiState.value = newState
                 }
             }
-        }
-        if (state.canvasZoom != 1f) {
-            val zoomOp = EditOperation.Canvas(state.aspectRatio, state.canvasZoom, state.imageTranslationX)
-            editorRepository.addOperation(zoomOp)
-            _editorState.value = _editorState.value.copy(canvasZoom = 1f)
-            refreshPreview()
+            if (state.canvasZoom != 1f) {
+                val zoomOp = EditOperation.Canvas(state.aspectRatio, state.canvasZoom, state.imageTranslationX)
+                editorRepository.addOperation(zoomOp)
+                withContext(Dispatchers.Main) {
+                    _editorState.value = _editorState.value.copy(canvasZoom = 1f)
+                }
+            }
+            refreshPreviewInternal()
         }
     }
 
     private suspend fun computeEditingState(): EditorUiState.Editing {
-        val activeId = _activeTextId.value
-        val preview = editorRepository.renderPreview(excludeTextId = activeId)
+        val activeTextIdValue = _activeTextId.value
+        val activeStickerIdValue = _activeStickerId.value
+        val preview = editorRepository.renderPreview(
+            excludeTextId = activeTextIdValue,
+            excludeStickerId = activeStickerIdValue
+        )
         val original = editorRepository.getOriginalBitmap()
         val canUndo = editorRepository.canUndo()
         val canRedo = editorRepository.canRedo()
@@ -195,20 +210,33 @@ class EditorSessionViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Non-blocking internal refresh that cancels prior stale render jobs.
+     */
+    private suspend fun refreshPreviewInternal() {
+        val newState = computeEditingState()
+        withContext(Dispatchers.Main) {
+            _uiState.value = newState
+        }
+    }
+
+    /**
+     * Public refresh called by UI controllers.
+     * Automatically cancels previous stale render requests to avoid queue contention.
+     */
     fun refreshPreview() {
-        android.util.Log.d("TXT_DBG", "refreshPreview called", Throwable())
-        viewModelScope.launch(Dispatchers.Default) {
-            val newState = computeEditingState()
-            withContext(Dispatchers.Main) {
-                _uiState.value = newState
-            }
+        refreshJob?.cancel()
+        refreshJob = viewModelScope.launch(Dispatchers.Default) {
+            refreshPreviewInternal()
         }
     }
 
     fun exportImage(filename: String) {
         viewModelScope.launch {
             _uiState.value = EditorUiState.Processing("Saving to gallery...")
-            val outputUri = exportImageUseCase(filename)
+            val outputUri = withContext(Dispatchers.IO) {
+                exportImageUseCase(filename)
+            }
             if (outputUri != null) {
                 _uiState.value = EditorUiState.ExportSuccess(outputUri)
             } else {
@@ -218,88 +246,119 @@ class EditorSessionViewModel @Inject constructor(
     }
 
     fun removeBackground() {
-        viewModelScope.launch {
-            _uiState.value = EditorUiState.Processing("Removing background...")
+        viewModelScope.launch(Dispatchers.Default) {
+            withContext(Dispatchers.Main) {
+                _uiState.value = EditorUiState.Processing("Removing background...")
+            }
             val bitmap = editorRepository.renderPreview() ?: editorRepository.getOriginalBitmap()
             if (bitmap != null) {
                 val result = removeBackgroundUseCase(bitmap)
                 if (result != null) {
-                    refreshPreview()
+                    refreshPreviewInternal()
                 } else {
-                    _uiState.value = EditorUiState.Error("Background removal failed")
+                    withContext(Dispatchers.Main) {
+                        _uiState.value = EditorUiState.Error("Background removal failed")
+                    }
                 }
             } else {
-                _uiState.value = EditorUiState.Error("No image loaded")
+                withContext(Dispatchers.Main) {
+                    _uiState.value = EditorUiState.Error("No image loaded")
+                }
             }
         }
     }
 
     fun applyCrop(croppedUri: Uri) {
-        applyCropUseCase(croppedUri)
-        refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            applyCropUseCase(croppedUri)
+            withContext(Dispatchers.Main) {
+                _editorState.value = _editorState.value.copy(baseImageUri = croppedUri.toString())
+            }
+            refreshPreviewInternal()
+        }
     }
 
     fun addDoodle(path: DoodlePath) {
-        applyDoodleUseCase(path)
-        refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            applyDoodleUseCase(path)
+            refreshPreviewInternal()
+        }
     }
 
     fun addText(text: TextLayer) {
-        applyTextUseCase.add(text)
-        _editorState.value = _editorState.value.copy(
-            textLayers = _editorState.value.textLayers + text
-        )
-        refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            applyTextUseCase.add(text)
+            withContext(Dispatchers.Main) {
+                _editorState.value = _editorState.value.copy(
+                    textLayers = _editorState.value.textLayers + text
+                )
+            }
+            refreshPreviewInternal()
+        }
     }
 
     fun updateText(text: TextLayer) {
-        applyTextUseCase.update(text)
-        _editorState.value = _editorState.value.copy(
-            textLayers = _editorState.value.textLayers.map { if (it.id == text.id) text else it }
-        )
-        refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            applyTextUseCase.update(text)
+            withContext(Dispatchers.Main) {
+                _editorState.value = _editorState.value.copy(
+                    textLayers = _editorState.value.textLayers.map { if (it.id == text.id) text else it }
+                )
+            }
+            refreshPreviewInternal()
+        }
     }
 
     fun removeText(textId: String) {
-        applyTextUseCase.remove(textId)
-        _editorState.value = _editorState.value.copy(
-            textLayers = _editorState.value.textLayers.filterNot { it.id == textId }
-        )
-        if (_activeTextId.value == textId) {
-            _activeTextId.value = null
+        viewModelScope.launch(Dispatchers.Default) {
+            applyTextUseCase.remove(textId)
+            withContext(Dispatchers.Main) {
+                _editorState.value = _editorState.value.copy(
+                    textLayers = _editorState.value.textLayers.filterNot { it.id == textId }
+                )
+                if (_activeTextId.value == textId) {
+                    _activeTextId.value = null
+                }
+            }
+            refreshPreviewInternal()
         }
-        refreshPreview()
     }
 
     fun submitTextInput(existingTextId: String?, text: String) {
-        val existing = existingTextId?.let { id ->
-            _editorState.value.textLayers.firstOrNull { it.id == id }
+        viewModelScope.launch(Dispatchers.Default) {
+            val existing = existingTextId?.let { id ->
+                _editorState.value.textLayers.firstOrNull { it.id == id }
+            }
+            if (existing != null) {
+                val updated = existing.copy(text = text)
+                applyTextUseCase.update(updated)
+                withContext(Dispatchers.Main) {
+                    _editorState.value = _editorState.value.copy(
+                        textLayers = _editorState.value.textLayers.map { if (it.id == updated.id) updated else it }
+                    )
+                    _activeTextId.value = updated.id
+                }
+            } else {
+                val newLayer = TextLayer(
+                    id = UUID.randomUUID().toString(),
+                    text = text,
+                    x = 0.5f,
+                    y = 0.5f,
+                    size = 0.08f,
+                    color = Color.WHITE,
+                    alpha = 255,
+                    rotation = 0f
+                )
+                applyTextUseCase.add(newLayer)
+                withContext(Dispatchers.Main) {
+                    _editorState.value = _editorState.value.copy(
+                        textLayers = _editorState.value.textLayers + newLayer
+                    )
+                    _activeTextId.value = newLayer.id
+                }
+            }
+            refreshPreviewInternal()
         }
-        if (existing != null) {
-            val updated = existing.copy(text = text)
-            applyTextUseCase.update(updated)
-            _editorState.value = _editorState.value.copy(
-                textLayers = _editorState.value.textLayers.map { if (it.id == updated.id) updated else it }
-            )
-            _activeTextId.value = updated.id
-        } else {
-            val newLayer = TextLayer(
-                id = UUID.randomUUID().toString(),
-                text = text,
-                x = 0.5f,
-                y = 0.5f,
-                size = 0.08f,
-                color = Color.WHITE,
-                alpha = 255,
-                rotation = 0f
-            )
-            applyTextUseCase.add(newLayer)
-            _editorState.value = _editorState.value.copy(
-                textLayers = _editorState.value.textLayers + newLayer
-            )
-            _activeTextId.value = newLayer.id
-        }
-        refreshPreview()
     }
 
     fun setActiveTextId(id: String?) {
@@ -311,22 +370,57 @@ class EditorSessionViewModel @Inject constructor(
     }
 
     fun addSticker(sticker: StickerLayer) {
-        applyStickerUseCase.add(sticker)
-        refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            applyStickerUseCase.add(sticker)
+            withContext(Dispatchers.Main) {
+                _editorState.value = _editorState.value.copy(
+                    stickerLayers = _editorState.value.stickerLayers + sticker
+                )
+                _activeStickerId.value = sticker.id
+            }
+            refreshPreviewInternal()
+        }
     }
 
     fun updateSticker(sticker: StickerLayer) {
-        applyStickerUseCase.update(sticker)
-        refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            applyStickerUseCase.update(sticker)
+            withContext(Dispatchers.Main) {
+                _editorState.value = _editorState.value.copy(
+                    stickerLayers = _editorState.value.stickerLayers.map {
+                        if (it.id == sticker.id) sticker else it
+                    }
+                )
+            }
+            refreshPreviewInternal()
+        }
     }
 
     fun removeSticker(stickerId: String) {
-        applyStickerUseCase.remove(stickerId)
-        refreshPreview()
+        viewModelScope.launch(Dispatchers.Default) {
+            applyStickerUseCase.remove(stickerId)
+            withContext(Dispatchers.Main) {
+                _editorState.value = _editorState.value.copy(
+                    stickerLayers = _editorState.value.stickerLayers.filterNot { it.id == stickerId }
+                )
+                if (_activeStickerId.value == stickerId) {
+                    _activeStickerId.value = null
+                }
+            }
+            refreshPreviewInternal()
+        }
     }
 
-    suspend fun getHighResBitmapWithoutFrame(): Bitmap? {
-        return editorRepository.renderPreviewWithoutFrame()
+    fun setActiveStickerId(id: String?) {
+        val changed = _activeStickerId.value != id
+        _activeStickerId.value = id
+        if (changed) {
+            refreshPreview()
+        }
+    }
+
+    suspend fun getHighResBitmapWithoutFrame(): Bitmap? = withContext(Dispatchers.Default) {
+        editorRepository.renderPreviewWithoutFrame()
     }
 
     fun syncPreviewBitmap(bitmap: Bitmap) {
@@ -338,6 +432,7 @@ class EditorSessionViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        refreshJob?.cancel()
         editorRepository.clear()
         cacheRepository.clearCache()
         aiRepository.release()

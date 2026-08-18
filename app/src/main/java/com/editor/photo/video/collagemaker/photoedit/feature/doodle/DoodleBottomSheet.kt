@@ -12,16 +12,16 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.SeekBar
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.editor.photo.video.collagemaker.photoedit.adapters.bottomsheetsadapter.BrushTypeAdapter
-import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.BrushItem
 import com.editor.photo.video.collagemaker.photoedit.R
+import com.editor.photo.video.collagemaker.photoedit.adapters.bottomsheetsadapter.BrushTypeAdapter
 import com.editor.photo.video.collagemaker.photoedit.core.BaseEditorBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.databinding.BottomSheetDoodleBinding
+import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.BrushItem
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.DoodlePath
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.DoodlePoint
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.DoodleShapeType
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import ja.burhanrashid52.photoeditor.PhotoEditor
 import ja.burhanrashid52.photoeditor.PhotoEditorView
 import ja.burhanrashid52.photoeditor.shape.ShapeBuilder
@@ -31,12 +31,11 @@ import java.util.UUID
 
 class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
 
-    // Use WeakReference to prevent memory leaks
     private var photoEditorViewRef: WeakReference<PhotoEditorView>? = null
     private var photoEditorRef: WeakReference<PhotoEditor>? = null
-    private var onDoodleApplied: (() -> Unit)? = null
 
-    private var onStrokeCompleted: ((DoodlePath) -> Unit)? = null
+    var onDoodleApplied: (() -> Unit)? = null
+    var onStrokeCompleted: ((DoodlePath) -> Unit)? = null
 
     private var currentColor: Int = Color.RED
     private var currentBrushSize: Float = 25f
@@ -46,16 +45,17 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
 
     private var brushAdapter: BrushTypeAdapter? = null
     private var touchInterceptor: FrameLayout? = null
-
-    // Cache for performance
     private val editorLocation = IntArray(2)
     private val sheetLocation = IntArray(2)
 
-    // Points of the stroke currently being drawn, in NORMALIZED (0f..1f) coordinates
-    // relative to the PhotoEditorView. Cleared/rebuilt per stroke; never written to history
-    // until the stroke finishes (ACTION_UP), so dragging never spams undo/redo.
     private val currentStrokePoints = mutableListOf<DoodlePoint>()
     private var isStrokeInProgress = false
+
+    private val applySettingsRunnable = Runnable {
+        if (!isDestroyed && isAdded) {
+            applyBrushSettings()
+        }
+    }
 
     private fun currentDoodleShapeType(): DoodleShapeType = when (currentShapeType) {
         ShapeType.Line -> DoodleShapeType.LINE
@@ -72,15 +72,11 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
 
         fun newInstance(
             photoEditorView: PhotoEditorView,
-            photoEditor: PhotoEditor,
-            onDoodleApplied: () -> Unit,
-            onStrokeCompleted: (DoodlePath) -> Unit = {}
+            photoEditor: PhotoEditor
         ): DoodleBottomSheet {
             return DoodleBottomSheet().apply {
                 this.photoEditorViewRef = WeakReference(photoEditorView)
                 this.photoEditorRef = WeakReference(photoEditor)
-                this.onDoodleApplied = onDoodleApplied
-                this.onStrokeCompleted = onStrokeCompleted
             }
         }
     }
@@ -92,7 +88,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
 
     override fun onStart() {
         super.onStart()
-
         if (isDestroyed) return
 
         try {
@@ -116,7 +111,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
                 isDraggable = true
                 isHideable = false
 
-                // Add callback to prevent crashes
                 addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
                     override fun onStateChanged(bottomSheet: View, newState: Int) {
                         if (newState == BottomSheetBehavior.STATE_HIDDEN && !isDestroyed) {
@@ -124,9 +118,7 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
                         }
                     }
 
-                    override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                        // No action needed
-                    }
+                    override fun onSlide(bottomSheet: View, slideOffset: Float) {}
                 })
             }
         } catch (e: Exception) {
@@ -154,7 +146,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
                 }
 
                 (decorView as? ViewGroup)?.addView(touchInterceptor)
-                Log.d(TAG, " Touch interceptor installed")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error setting up touch interceptor: ${e.message}", e)
@@ -165,7 +156,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
         if (isDestroyed) return false
 
         try {
-            // Get bottom sheet position
             val bottomSheet = (dialog as? BottomSheetDialog)?.findViewById<View>(
                 com.google.android.material.R.id.design_bottom_sheet
             ) ?: return false
@@ -173,46 +163,34 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
             bottomSheet.getLocationOnScreen(sheetLocation)
             val sheetTop = sheetLocation[1]
 
-            // If touch is above bottom sheet, forward to PhotoEditorView
+            // Process touches above the bottom sheet layout
             if (event.rawY < sheetTop) {
                 val editorView = photoEditorViewRef?.get() ?: return false
-
-                // Only handle single touch to prevent crashes
-                if (event.pointerCount != 1) {
-                    Log.d(TAG, "Multi-touch ignored (${event.pointerCount} pointers)")
-                    return false
-                }
-
                 editorView.getLocationOnScreen(editorLocation)
 
-                // Convert screen coordinates to PhotoEditorView coordinates
                 val x = event.rawX - editorLocation[0]
                 val y = event.rawY - editorLocation[1]
 
-                // Validate coordinates are within bounds
-                if (x < 0 || y < 0 || x > editorView.width || y > editorView.height) {
-                    return false
-                }
+                val maskedAction = event.actionMasked
 
-                // Record this point (normalized against the PhotoEditorView) so the completed
-                // stroke can be committed as ONE EditOperation.Doodle on touch-up. We only do
-                // this for real brush strokes, not while the eraser is active - erasing isn't
-                // yet modeled as an operation, so it's left to the PhotoEditor overlay only.
                 if (!isEraserMode && editorView.width > 0 && editorView.height > 0) {
-                    when (event.action) {
+                    val normalizedX = (x / editorView.width).coerceIn(0f, 1f)
+                    val normalizedY = (y / editorView.height).coerceIn(0f, 1f)
+
+                    when (maskedAction) {
                         MotionEvent.ACTION_DOWN -> {
                             currentStrokePoints.clear()
-                            currentStrokePoints.add(DoodlePoint(x / editorView.width, y / editorView.height))
+                            currentStrokePoints.add(DoodlePoint(normalizedX, normalizedY))
                             isStrokeInProgress = true
                         }
                         MotionEvent.ACTION_MOVE -> {
                             if (isStrokeInProgress) {
-                                currentStrokePoints.add(DoodlePoint(x / editorView.width, y / editorView.height))
+                                currentStrokePoints.add(DoodlePoint(normalizedX, normalizedY))
                             }
                         }
                         MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                             if (isStrokeInProgress) {
-                                currentStrokePoints.add(DoodlePoint(x / editorView.width, y / editorView.height))
+                                currentStrokePoints.add(DoodlePoint(normalizedX, normalizedY))
                                 commitCurrentStroke(editorView.width)
                             }
                             isStrokeInProgress = false
@@ -220,7 +198,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
                     }
                 }
 
-                // Create new motion event with adjusted coordinates
                 val newEvent = MotionEvent.obtain(
                     event.downTime,
                     event.eventTime,
@@ -230,10 +207,10 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
                     event.metaState
                 )
 
-                try {
+                return try {
                     val handled = editorView.dispatchTouchEvent(newEvent)
-                    Log.d(TAG, "Touch: action=${event.action}, x=$x, y=$y, handled=$handled")
-                    return handled
+                    // Explicitly return true on ACTION_DOWN so touch target locks onto interceptor
+                    if (maskedAction == MotionEvent.ACTION_DOWN) true else handled
                 } finally {
                     newEvent.recycle()
                 }
@@ -245,17 +222,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
         return false
     }
 
-    /**
-     * Finalizes the in-progress stroke into ONE immutable [DoodlePath] and hands it to
-     * [onStrokeCompleted] (wired by PhotoStudioFragment to EditorSessionViewModel.addDoodle),
-     * which routes it through ApplyDoodleUseCase -> HistoryManager -> EditorEngine so it becomes
-     * the real, exportable, undo/redo-aware app state.
-     *
-     * The PhotoEditor library's own just-drawn stroke is then undone: it already did its job of
-     * giving the user live visual feedback while dragging, but it must not remain a second,
-     * competing copy of this stroke once our own operation has taken over as the source of truth
-     * (the next refreshPreview() will re-render photoEditorView.source with the doodle baked in).
-     */
     private fun commitCurrentStroke(editorViewWidth: Int) {
         try {
             if (currentStrokePoints.isEmpty() || editorViewWidth <= 0) return
@@ -270,8 +236,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
             )
 
             onStrokeCompleted?.invoke(doodlePath)
-
-            // Remove PhotoEditor's own transient copy of the stroke we just committed.
             photoEditorRef?.get()?.undo()
         } catch (e: Exception) {
             Log.e(TAG, "Error committing stroke: ${e.message}", e)
@@ -295,7 +259,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
             setupBrushSizeSeekBar()
             setupBrushRecyclerView()
 
-            // Initialize visual states
             updateSeekBarThumbColor(binding.seekBarColor, currentColor)
             updateSeekBarThumbColor(binding.seekBarBrushSize, currentColor)
             binding.seekBarBrushSize.progressDrawable?.mutate()?.setTint(currentColor)
@@ -339,7 +302,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
                             updateEraserButtonState()
                         }
 
-                        // Dynamic color visual updates
                         updateSeekBarThumbColor(this@apply, currentColor)
                         updateSeekBarThumbColor(binding.seekBarBrushSize, currentColor)
                         binding.seekBarBrushSize.progressDrawable?.mutate()?.setTint(currentColor)
@@ -361,7 +323,7 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
     private fun setupBrushSizeSeekBar() {
         binding.seekBarBrushSize.apply {
             progress = currentBrushSize.toInt()
-            binding.txtBrushSize.text = "${progress}"
+            binding.txtBrushSize.text = "$progress"
 
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(
@@ -372,10 +334,9 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
                     if (isDestroyed) return
 
                     try {
-                        // Clamp min size to 5 to avoid completely invisible drawings
-                        val size = Math.max(5, progress)
+                        val size = progress.coerceAtLeast(5)
                         currentBrushSize = size.toFloat()
-                        binding.txtBrushSize.text = "${size}"
+                        binding.txtBrushSize.text = "$size"
 
                         updateBrushPreview()
                         applyBrushSettings()
@@ -401,32 +362,34 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
                 BrushItem(ShapeType.Line, R.drawable.ic_line, "Line", 20f)
             )
 
-            brushAdapter = BrushTypeAdapter(brushTypes) { brushItem ->
-                if (isDestroyed) return@BrushTypeAdapter
+            // Adapter instance reuse check & itemAnimator clear
+            if (brushAdapter == null) {
+                brushAdapter = BrushTypeAdapter(brushTypes) { brushItem ->
+                    if (isDestroyed) return@BrushTypeAdapter
 
-                try {
-                    currentBrushSize = brushItem.size
-                    binding.seekBarBrushSize.progress = currentBrushSize.toInt()
-                    binding.txtBrushSize.text = "${currentBrushSize.toInt()}"
-                    currentShapeType = brushItem.shapeType
+                    try {
+                        currentBrushSize = brushItem.size
+                        binding.seekBarBrushSize.progress = currentBrushSize.toInt()
+                        binding.txtBrushSize.text = "${currentBrushSize.toInt()}"
+                        currentShapeType = brushItem.shapeType
 
-                    Log.d(TAG, "Selected: ${brushItem.name}")
+                        if (isEraserMode) {
+                            isEraserMode = false
+                            updateEraserButtonState()
+                        }
 
-                    if (isEraserMode) {
-                        isEraserMode = false
-                        updateEraserButtonState()
+                        updateBrushPreview()
+                        applyBrushSettings()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error selecting brush: ${e.message}", e)
                     }
-
-                    updateBrushPreview()
-                    applyBrushSettings()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error selecting brush: ${e.message}", e)
                 }
             }
 
             brushAdapter?.updateColor(currentColor)
 
             binding.rvBrushTypes.apply {
+                itemAnimator = null
                 layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
                 adapter = brushAdapter
                 setHasFixedSize(true)
@@ -438,17 +401,11 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
 
     private fun setupClickListeners() {
         binding.btnUndo.setOnClickListener {
-            safeExecute {
-                photoEditorRef?.get()?.undo()
-                Log.d(TAG, "Undo clicked")
-            }
+            safeExecute { photoEditorRef?.get()?.undo() }
         }
 
         binding.btnRedo.setOnClickListener {
-            safeExecute {
-                photoEditorRef?.get()?.redo()
-                Log.d(TAG, "Redo clicked")
-            }
+            safeExecute { photoEditorRef?.get()?.redo() }
         }
 
         binding.btnReverse.setOnClickListener {
@@ -466,7 +423,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
                 isEraserMode = false
                 updateEraserButtonState()
 
-                // Reset visual states
                 updateSeekBarThumbColor(binding.seekBarColor, currentColor)
                 updateSeekBarThumbColor(binding.seekBarBrushSize, currentColor)
                 binding.seekBarBrushSize.progressDrawable?.mutate()?.setTint(currentColor)
@@ -474,19 +430,13 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
 
                 updateBrushPreview()
 
-                binding.root.postDelayed({
-                    if (!isDestroyed) {
-                        applyBrushSettings()
-                        Log.d(TAG, "Settings reset to default")
-                    }
-                }, RESET_DELAY_MS)
+                binding.root.removeCallbacks(applySettingsRunnable)
+                binding.root.postDelayed(applySettingsRunnable, RESET_DELAY_MS)
             }
         }
 
         binding.btnApply.setOnClickListener {
-            safeExecute {
-                applyDoodle()
-            }
+            safeExecute { applyDoodle() }
         }
 
         binding.btnEraser.setOnClickListener {
@@ -497,10 +447,8 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
 
                 if (isEraserMode) {
                     photoEditorRef?.get()?.brushEraser()
-                    Log.d(TAG, "Eraser mode ON")
                 } else {
                     applyBrushSettings()
-                    Log.d(TAG, "Eraser mode OFF")
                 }
             }
         }
@@ -508,13 +456,8 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
 
     private fun enableDrawingMode() {
         if (isDestroyed) return
-
-        binding.root.postDelayed({
-            if (!isDestroyed) {
-                applyBrushSettings()
-                Log.d(TAG, "✨ Drawing ACTIVE with touch interceptor")
-            }
-        }, SETTINGS_DELAY_MS)
+        binding.root.removeCallbacks(applySettingsRunnable)
+        binding.root.postDelayed(applySettingsRunnable, SETTINGS_DELAY_MS)
     }
 
     private fun applyBrushSettings() {
@@ -529,6 +472,7 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
                 editor.brushEraser()
                 editor.brushSize = currentBrushSize
             } else {
+
                 if (currentShapeType == ShapeType.Brush) {
                     editor.brushColor = currentColor
                     editor.brushSize = currentBrushSize
@@ -536,15 +480,12 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
                     val shapeBuilder = ShapeBuilder()
                         .withShapeType(currentShapeType)
                         .withShapeSize(currentBrushSize)
-                        .withShapeOpacity(255)
+                        .withShapeOpacity(Color.alpha(currentColor))
 
                     editor.setShape(shapeBuilder)
                     editor.brushColor = currentColor
                 }
             }
-
-            Log.d(TAG, "✅ Brush: $currentShapeType | Size=$currentBrushSize | Color=$currentColor")
-
         } catch (e: Exception) {
             Log.e(TAG, "Error applying brush settings: ${e.message}", e)
         }
@@ -554,7 +495,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
         if (isDestroyed) return
 
         try {
-            Log.d(TAG, "💾 Saving doodle...")
             photoEditorRef?.get()?.setBrushDrawingMode(false)
             onDoodleApplied?.invoke()
             dismissAllowingStateLoss()
@@ -580,7 +520,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
     private fun updateBrushPreview() {
         if (isDestroyed) return
         try {
-            // Map currentBrushSize (5 to 100) to a visual diameter within the 64dp container (4dp to 48dp)
             val minPx = dpToPx(4)
             val maxPx = dpToPx(48)
             val progressPercent = (currentBrushSize - 5f) / (100f - 5f)
@@ -643,7 +582,6 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
 
     private inline fun safeExecute(block: () -> Unit) {
         if (isDestroyed) return
-
         try {
             block()
         } catch (e: Exception) {
@@ -655,22 +593,20 @@ class DoodleBottomSheet : BaseEditorBottomSheet<BottomSheetDoodleBinding>() {
         isDestroyed = true
 
         try {
-            // Remove touch interceptor
+            binding.root.removeCallbacks(applySettingsRunnable)
+
             touchInterceptor?.let { interceptor ->
                 (dialog?.window?.decorView as? ViewGroup)?.removeView(interceptor)
             }
             touchInterceptor = null
 
-            // Disable drawing mode
             photoEditorRef?.get()?.setBrushDrawingMode(false)
 
-            // Clear references
             brushAdapter = null
             photoEditorViewRef = null
             photoEditorRef = null
             onDoodleApplied = null
-
-            Log.d(TAG, "🧹 Cleanup completed")
+            onStrokeCompleted = null
         } catch (e: Exception) {
             Log.e(TAG, "Error in onDestroyView: ${e.message}", e)
         }

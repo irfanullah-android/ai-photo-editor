@@ -78,6 +78,8 @@ dependencies {
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.constraintlayout)
 
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+
     // ===== Test =====
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

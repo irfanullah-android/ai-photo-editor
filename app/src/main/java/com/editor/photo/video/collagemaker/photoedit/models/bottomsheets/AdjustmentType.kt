@@ -15,5 +15,6 @@ enum class AdjustmentType {
     HUE,
     VIGNETTE,
     SHARPEN,
-    GRAIN
+    GRAIN,
+    AUTO
 }

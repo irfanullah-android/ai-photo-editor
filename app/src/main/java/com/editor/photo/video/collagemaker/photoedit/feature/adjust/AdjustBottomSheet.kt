@@ -18,7 +18,6 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.editor.photo.video.collagemaker.photoedit.R
 import com.editor.photo.video.collagemaker.photoedit.adapters.bottomsheetsadapter.AdjustmentAdapter
 import com.editor.photo.video.collagemaker.photoedit.databinding.BottomSheetAdjustmentBinding
@@ -28,13 +27,18 @@ import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.AdjustmentModel
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.AdjustmentType
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 class AdjustBottomSheet : BottomSheetDialogFragment() {
@@ -52,6 +56,7 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
     private var lastBitmap: Bitmap? = null
     private var wasApplied = false
     private var renderJob: Job? = null
+    private var autoAnalysisJob: Job? = null
 
     private var onAdjustApplied: ((Bitmap?) -> Unit)? = null
 
@@ -98,6 +103,7 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
 
     private fun initAdjustmentsList() {
         val initialList = listOf(
+            AdjustmentModel("Auto", R.drawable.ic_auto_enhance, AdjustmentType.AUTO, value = 100),
             AdjustmentModel("Brightness", R.drawable.ic_brightness, AdjustmentType.BRIGHTNESS, isSelected = true),
             AdjustmentModel("Contrast", R.drawable.ic_contrast, AdjustmentType.CONTRAST),
             AdjustmentModel("Warmth", R.drawable.ic_warmth, AdjustmentType.WARMTH),
@@ -124,12 +130,13 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
                     if (adjustmentAdapter == null) {
                         adjustmentAdapter = AdjustmentAdapter(list.toMutableList()) { adj, _ ->
                             adjustViewModel.selectAdjustment(adj)
+                            if (adj.type == AdjustmentType.AUTO) {
+                                runAutoEnhance()
+                            }
                         }
                         binding.rvAdjustments.adapter = adjustmentAdapter
                     } else {
-                        // Safe update of list content
                         adjustmentAdapter?.apply {
-                            // Check if sizes match to avoid IndexOutOfBounds
                             val adapterList = this.javaClass.getDeclaredField("adjustments").let { field ->
                                 field.isAccessible = true
                                 @Suppress("UNCHECKED_CAST")
@@ -153,31 +160,38 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
 
     private fun updateAdjustmentUI(adjustment: AdjustmentModel) {
         binding.tvAdjustmentName.text = adjustment.name
-        binding.seekBarAdjustment.progress = adjustment.value + 100
+        binding.seekBarAdjustment.progress = adjustment.value
         binding.tvAdjustmentValue.text = adjustment.value.toString()
+        binding.seekBarAdjustment.isEnabled = true
     }
 
     private fun setupListeners() {
         binding.seekBarAdjustment.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(sb: SeekBar?, p: Int, fromUser: Boolean) {
                 if (!fromUser) return
-                val value = p - 100
-                binding.tvAdjustmentValue.text = value.toString()
+                binding.tvAdjustmentValue.text = p.toString()
 
                 val adj = adjustViewModel.selectedAdjustment.value ?: return
-                adjustViewModel.updateValue(adj.type, value)
+                adjustViewModel.updateValue(adj.type, p)
+
+                if (adj.type == AdjustmentType.AUTO) {
+                    runAutoEnhance()
+                    return
+                }
 
                 if (adj.type == AdjustmentType.SHARPEN) {
+                    scheduleRender(debounceMs = 80, isPreview = true)
                     return
                 }
 
                 imageView?.colorFilter = ColorMatrixEngine.asColorFilter(buildCombinedSpec())
+                scheduleRender(debounceMs = 60, isPreview = true)
             }
 
             override fun onStartTrackingTouch(sb: SeekBar?) {}
 
             override fun onStopTrackingTouch(sb: SeekBar?) {
-                scheduleRender(debounceMs = 0)
+                scheduleRender(debounceMs = 0, isPreview = false)
             }
         })
 
@@ -187,7 +201,7 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
     private fun ease(t: Float): Float {
         val c = t.coerceIn(-1f, 1f)
         val sign = if (c < 0f) -1f else 1f
-        val a = kotlin.math.abs(c)
+        val a = abs(c)
         return sign * (1f - (1f - a) * (1f - a))
     }
 
@@ -262,7 +276,7 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
 
     private fun sharpenAmount(): Int = adjustViewModel.adjustmentValues.value[AdjustmentType.SHARPEN] ?: 0
 
-    private fun scheduleRender(debounceMs: Long) {
+    private fun scheduleRender(debounceMs: Long, isPreview: Boolean = false) {
         val bitmap = originalBitmap ?: return
         renderJob?.cancel()
 
@@ -278,31 +292,40 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
         renderJob = lifecycleScope.launch(Dispatchers.Default) {
             try {
                 if (debounceMs > 0) delay(debounceMs)
-                if (!isActive) return@launch
+                ensureActive()
+
+                val targetBitmap = if (isPreview && (bitmap.width > 1024 || bitmap.height > 1024)) {
+                    val scale = 1024f / max(bitmap.width, bitmap.height)
+                    Bitmap.createScaledBitmap(
+                        bitmap,
+                        (bitmap.width * scale).roundToInt().coerceAtLeast(1),
+                        (bitmap.height * scale).roundToInt().coerceAtLeast(1),
+                        true
+                    )
+                } else {
+                    bitmap
+                }
 
                 var result = if (hasAnyMatrixAdjustment()) {
-                    ColorMatrixEngine.render(bitmap, buildCombinedSpec())
+                    ColorMatrixEngine.render(targetBitmap, buildCombinedSpec())
                 } else {
-                    bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, false)
+                    targetBitmap.copy(targetBitmap.config ?: Bitmap.Config.ARGB_8888, false)
                 }
 
                 val amount = sharpenAmount()
                 if (amount != 0 && isActive) {
                     val sharpened = applySharpenConvolution(result, amount)
-                    if (result != bitmap) result.recycle()
+                    if (result != targetBitmap) result.recycle()
                     result = sharpened
                 }
 
-                if (!isActive) {
-                    if (result != bitmap) result.recycle()
-                    return@launch
+                if (targetBitmap != bitmap && targetBitmap != result && !targetBitmap.isRecycled) {
+                    targetBitmap.recycle()
                 }
 
+                ensureActive()
+
                 withContext(Dispatchers.Main) {
-                    if (!isActive) {
-                        if (result != bitmap) result.recycle()
-                        return@withContext
-                    }
                     imageView?.colorFilter = null
                     imageView?.setImageBitmap(result)
                     val old = lastBitmap
@@ -310,7 +333,6 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
                     recycleIfSafe(old, result)
                 }
             } catch (e: CancellationException) {
-                // Ignore
             } catch (e: OutOfMemoryError) {
                 e.printStackTrace()
                 withContext(Dispatchers.Main) { cleanup() }
@@ -320,8 +342,9 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
-    private fun applySharpenConvolution(source: Bitmap, amount: Int): Bitmap {
-        val strength = (amount / 100f).coerceIn(-1f, 1f)
+    private suspend fun applySharpenConvolution(source: Bitmap, amount: Int): Bitmap {
+        val rawT = amount / 100f
+        val strength = ease(rawT)
         val w = source.width
         val h = source.height
         if (w < 3 || h < 3) return source.copy(source.config ?: Bitmap.Config.ARGB_8888, false)
@@ -330,47 +353,53 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
         source.getPixels(pixels, 0, w, 0, 0, w, h)
         val out = IntArray(w * h)
 
-        val k = kotlin.math.abs(strength) * 1.5f
-        val center: Float
-        val edge: Float
-        if (strength >= 0f) {
-            center = 1f + 4f * k
-            edge = -k
-        } else {
-            center = 1f - 3f * k
-            edge = k * 0.75f
-        }
+        val k = abs(strength) * 1.5f
+        val center = if (strength >= 0f) 1f + 4f * k else 1f - 3f * k
+        val edge = if (strength >= 0f) -k else k * 0.75f
 
         for (y in 0 until h) {
+            if (y % 32 == 0) currentCoroutineContext().ensureActive()
+
             val yUp = if (y == 0) 0 else y - 1
             val yDown = if (y == h - 1) h - 1 else y + 1
+            val yW = y * w
+            val yUpW = yUp * w
+            val yDownW = yDown * w
+
             for (x in 0 until w) {
                 val xLeft = if (x == 0) 0 else x - 1
                 val xRight = if (x == w - 1) w - 1 else x + 1
 
-                val pC = pixels[y * w + x]
-                val pU = pixels[yUp * w + x]
-                val pD = pixels[yDown * w + x]
-                val pL = pixels[y * w + xLeft]
-                val pR = pixels[y * w + xRight]
+                val pC = pixels[yW + x]
+                val pU = pixels[yUpW + x]
+                val pD = pixels[yDownW + x]
+                val pL = pixels[yW + xLeft]
+                val pR = pixels[yW + xRight]
 
-                val a = pC ushr 24 and 0xFF
+                val a = (pC ushr 24) and 0xFF
 
-                fun channel(shift: Int): Int {
-                    val c = (pC ushr shift) and 0xFF
-                    val u = (pU ushr shift) and 0xFF
-                    val d = (pD ushr shift) and 0xFF
-                    val l = (pL ushr shift) and 0xFF
-                    val r = (pR ushr shift) and 0xFF
-                    val value = c * center + (u + d + l + r) * edge
-                    return value.roundToInt().coerceIn(0, 255)
-                }
+                val rC = (pC ushr 16) and 0xFF
+                val rU = (pU ushr 16) and 0xFF
+                val rD = (pD ushr 16) and 0xFF
+                val rL = (pL ushr 16) and 0xFF
+                val rR = (pR ushr 16) and 0xFF
+                val r = (rC * center + (rU + rD + rL + rR) * edge).roundToInt().coerceIn(0, 255)
 
-                val rC = channel(16)
-                val gC = channel(8)
-                val bC = channel(0)
+                val gC = (pC ushr 8) and 0xFF
+                val gU = (pU ushr 8) and 0xFF
+                val gD = (pD ushr 8) and 0xFF
+                val gL = (pL ushr 8) and 0xFF
+                val gR = (pR ushr 8) and 0xFF
+                val g = (gC * center + (gU + gD + gL + gR) * edge).roundToInt().coerceIn(0, 255)
 
-                out[y * w + x] = (a shl 24) or (rC shl 16) or (gC shl 8) or bC
+                val bC = pC and 0xFF
+                val bU = pU and 0xFF
+                val bD = pD and 0xFF
+                val bL = pL and 0xFF
+                val bR = pR and 0xFF
+                val b = (bC * center + (bU + bD + bL + bR) * edge).roundToInt().coerceIn(0, 255)
+
+                out[yW + x] = (a shl 24) or (r shl 16) or (g shl 8) or b
             }
         }
 
@@ -419,6 +448,44 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
     fun setImageView(view: ImageView) { imageView = view }
     fun setOriginalBitmap(bitmap: Bitmap) { originalBitmap = bitmap }
 
+    private fun runAutoEnhance() {
+        val baseline = originalBitmap ?: return
+        autoAnalysisJob?.cancel()
+
+        val autoIntensity = (adjustViewModel.adjustmentValues.value[AdjustmentType.AUTO] ?: 100) / 100f
+
+        autoAnalysisJob = lifecycleScope.launch {
+            try {
+                val calculatedValues = withContext(Dispatchers.Default) {
+                    AutoEnhanceCalculator.calculate(baseline)
+                }
+                if (!isActive) return@launch
+
+                val scaledAutoValues = calculatedValues.mapValues { (_, value) ->
+                    (value * autoIntensity).roundToInt()
+                }
+
+                applyAutoValues(scaledAutoValues)
+            } catch (e: CancellationException) {
+            } catch (e: Exception) {
+                Log.e("AdjustBottomSheet", "Auto enhance failed: ${e.message}")
+            }
+        }
+    }
+
+    private fun applyAutoValues(autoValues: Map<AdjustmentType, Int>) {
+        AdjustmentType.values()
+            .filter { it != AdjustmentType.AUTO }
+            .forEach { type -> adjustViewModel.updateValue(type, autoValues[type] ?: 0) }
+
+        adjustViewModel.selectedAdjustment.value?.let { updateAdjustmentUI(it) }
+
+        originalBitmap?.let { imageView?.setImageBitmap(it) }
+        imageView?.colorFilter = ColorMatrixEngine.asColorFilter(buildCombinedSpec())
+
+        scheduleRender(debounceMs = 0, isPreview = false)
+    }
+
     private fun cleanup() {
         renderJob?.cancel()
         lastBitmap?.let { if (!it.isRecycled && it != originalBitmap) it.recycle() }
@@ -426,6 +493,7 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
     }
 
     override fun onDestroyView() {
+        autoAnalysisJob?.cancel()
         cleanup()
         imageView?.colorFilter = null
         adjustmentAdapter = null

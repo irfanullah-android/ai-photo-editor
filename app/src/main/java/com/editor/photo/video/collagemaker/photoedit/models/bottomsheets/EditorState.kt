@@ -36,6 +36,7 @@ data class TextLayer(
     val text: String,
     /** Normalized x position (0f = left edge, 1f = right edge) */
     val x: Float = 0.5f,
+    var scale: Float = 1f,
     /** Normalized y position (0f = top edge, 1f = bottom edge) */
     val y: Float = 0.5f,
     /** Normalized text size (fraction of canvas width) */

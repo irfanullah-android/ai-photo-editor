@@ -1,6 +1,5 @@
 package com.editor.photo.video.collagemaker.photoedit.fragments.childfragments
 
-import android.app.Activity
 import android.app.Dialog
 import android.content.Intent
 import android.graphics.Bitmap
@@ -12,7 +11,9 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.Window
@@ -21,9 +22,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
@@ -35,26 +33,26 @@ import com.editor.photo.video.collagemaker.photoedit.databinding.FragmentPhotoSt
 import com.editor.photo.video.collagemaker.photoedit.editor.session.EditorSessionViewModel
 import com.editor.photo.video.collagemaker.photoedit.feature.adjust.AdjustBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.feature.canvas.CanvasBottomSheet
+import com.editor.photo.video.collagemaker.photoedit.feature.crop.CropFeature
 import com.editor.photo.video.collagemaker.photoedit.feature.doodle.DoodleBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.feature.effect.EffectBottomSheet
-import com.editor.photo.video.collagemaker.photoedit.feature.enhance.EnhanceBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.feature.filter.FilterBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.feature.frame.FrameBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.feature.remove.RemoveBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.feature.rotate.RotateBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.feature.sticker.StickerBottomSheet
+import com.editor.photo.video.collagemaker.photoedit.feature.sticker.StickerOverlayView
+import com.editor.photo.video.collagemaker.photoedit.feature.text.TextEditorBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.feature.text.TextFonts
-import com.editor.photo.video.collagemaker.photoedit.feature.text.TextInputBottomSheet
 import com.editor.photo.video.collagemaker.photoedit.feature.text.TextOverlayView
 import com.editor.photo.video.collagemaker.photoedit.fragments.basefragments.BaseFragment
 import com.editor.photo.video.collagemaker.photoedit.helpers.FullscreenHelper
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EditorUiState
+import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.StickerLayer
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextAlignment
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.TextLayer
 import com.editor.photo.video.collagemaker.photoedit.models.gallery.EditorItemModel
 import com.editor.photo.video.collagemaker.photoedit.models.gallery.EditorTool
-import com.yalantis.ucrop.UCrop
-import com.yalantis.ucrop.UCropActivity
 import ja.burhanrashid52.photoeditor.PhotoEditor
 import ja.burhanrashid52.photoeditor.PhotoEditorView
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +60,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 class PhotoStudioFragment :
     BaseFragment<FragmentPhotoStudioBinding>(R.layout.fragment_photo_studio) {
@@ -71,6 +68,7 @@ class PhotoStudioFragment :
         private const val TAG = "PhotoStudioFragment"
         private const val MIN_SCALE = 0.5f
         private const val MAX_SCALE = 3.0f
+        private const val STICKER_BASE_SIZE_RATIO = 0.25f
 
         fun newInstance(imageUri: String) = PhotoStudioFragment().apply {
             arguments = Bundle().apply { putString("imageUri", imageUri) }
@@ -90,13 +88,29 @@ class PhotoStudioFragment :
 
     private lateinit var scaleDetector: ScaleGestureDetector
     private var progressDialog: Dialog? = null
+
     private var textOverlayView: TextOverlayView? = null
     private var isOverlayTransforming = false
+    private var layoutRetryToken = 0
 
-    private val cropLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            handleCropResult(result)
-        }
+    private var stickerOverlayView: StickerOverlayView? = null
+    private var isStickerOverlayTransforming = false
+    private var stickerLayoutRetryToken = 0
+
+    private var lastAppliedStickerId: String? = null
+    private var lastAppliedStickerScale: Float = Float.NaN
+    private var lastAppliedStickerX: Float = Float.NaN
+    private var lastAppliedStickerY: Float = Float.NaN
+    private var lastAppliedStickerRotation: Float = Float.NaN
+
+    private val cropFeature = CropFeature(
+        caller = this,
+        onCropSuccess = { uri ->
+            viewModel.applyCrop(uri)
+            showToast("Image cropped")
+        },
+        onCropError = { message -> showToast(message) }
+    )
 
     override fun onViewCreatedOneTime() {
         setupPhotoEditorView()
@@ -109,6 +123,7 @@ class PhotoStudioFragment :
         observeEditorState()
         observeActiveTool()
         observeActiveText()
+        observeActiveSticker()
         loadInitialImage()
         openToolFromArguments()
     }
@@ -184,9 +199,54 @@ class PhotoStudioFragment :
             btnUndo.setOnClickListener { viewModel.undo() }
             btnRedo.setOnClickListener { viewModel.redo() }
             btnExport.setOnClickListener { viewModel.exportImage("PhotoFix_" + System.currentTimeMillis() + ".jpg") }
-            btnCompare.setOnClickListener { toggleCompare() }
             btnFullscreen.setOnClickListener { toggleFullscreen() }
+            stickerOverlayContainer.setOnClickListener { viewModel.setActiveStickerId(null) }
+            setupCompareButton()
         }
+    }
+
+    private fun setupCompareButton() {
+        binding.btnCompare.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    showOriginal()
+                    view.isPressed = true
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    restoreEdited()
+                    view.isPressed = false
+                    view.performClick()
+                    true
+                }
+                else -> false
+            }
+        }
+        binding.btnCompare.setOnClickListener {}
+    }
+
+    private fun showOriginal() {
+        if (isComparingOriginal) return
+        val editingState = viewModel.uiState.value as? EditorUiState.Editing ?: return
+
+        isComparingOriginal = true
+        editingState.originalBitmap?.let {
+            photoEditorView.source.setImageBitmap(it)
+        }
+        setOverlaysVisibility(View.GONE)
+        binding.btnCompare.setImageResource(R.drawable.ic_back_orignial)
+    }
+
+    private fun restoreEdited() {
+        if (!isComparingOriginal) return
+        isComparingOriginal = false
+
+        val bitmap = (viewModel.uiState.value as? EditorUiState.Editing)?.previewBitmap
+        bitmap?.let {
+            photoEditorView.source.setImageBitmap(it)
+        }
+        setOverlaysVisibility(View.VISIBLE)
+        binding.btnCompare.setImageResource(R.drawable.ic_compare)
     }
 
     private fun setupGestureDetectors() {
@@ -298,8 +358,6 @@ class PhotoStudioFragment :
         }
     }
 
-    private var layoutRetryToken = 0
-
     private fun renderTextOverlay(layer: TextLayer) {
         if (isOverlayTransforming) return
 
@@ -377,10 +435,12 @@ class PhotoStudioFragment :
         override fun onTransformCommitted() {
             isOverlayTransforming = false
             val overlay = textOverlayView ?: return
-            val layer = viewModel.editorState.value.textLayers.firstOrNull { it.id == textId } ?: return
+            val layer =
+                viewModel.editorState.value.textLayers.firstOrNull { it.id == textId } ?: return
 
             val container = binding.textOverlayContainer
-            val imageRect = fittedImageRect(container.width, container.height, currentPreviewBitmapForOverlay())
+            val imageRect =
+                fittedImageRect(container.width, container.height, currentPreviewBitmapForOverlay())
 
             val centerX = container.width / 2f + overlay.translationX
             val centerY = container.height / 2f + overlay.translationY
@@ -401,9 +461,9 @@ class PhotoStudioFragment :
         }
 
         override fun onEditRequested() {
-            // Spec: SAME dialog Phase 1 par wapas jaaye, position/rotation/scale/style preserve.
-            (childFragmentManager.findFragmentByTag("text_editor_style") as? DialogFragment)?.dismiss()
-            TextInputBottomSheet.newInstance(textId).show(childFragmentManager, "text_input")
+            (childFragmentManager.findFragmentByTag("text_editor") as? DialogFragment)?.dismiss()
+            viewModel.setActiveTextId(textId)
+            TextEditorBottomSheet.newInstance().show(childFragmentManager, "text_editor")
         }
     }
 
@@ -412,10 +472,192 @@ class PhotoStudioFragment :
         textOverlayView = null
     }
 
+    private fun observeActiveSticker() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            combine(
+                viewModel.activeStickerId,
+                viewModel.editorState,
+                viewModel.uiState
+            ) { activeId, state, _ ->
+                activeId to state.stickerLayers.firstOrNull { it.id == activeId }
+            }.collectLatest { (activeId, layer) ->
+                if (activeId == null || layer == null) {
+                    removeStickerOverlay()
+                } else {
+                    renderStickerOverlay(layer)
+                }
+            }
+        }
+    }
+
+    // ===== STICKER FIX START (renderStickerOverlay with logs) =====
+    private fun renderStickerOverlay(layer: StickerLayer) {
+        if (isStickerOverlayTransforming) {
+            Log.d(TAG, "renderStickerOverlay SKIP -> isStickerOverlayTransforming=true")
+            return
+        }
+
+        val container = binding.stickerOverlayContainer
+        val containerWidth = container.width
+        val containerHeight = container.height
+        if (containerWidth <= 0 || containerHeight <= 0) {
+            Log.d(TAG, "renderStickerOverlay RETRY -> container not laid out yet (w=$containerWidth h=$containerHeight)")
+            val token = ++stickerLayoutRetryToken
+            container.post {
+                if (_binding != null && token == stickerLayoutRetryToken) {
+                    renderStickerOverlay(layer)
+                }
+            }
+            return
+        }
+        stickerLayoutRetryToken++
+
+        if (stickerOverlayView == null || container.childCount > 1 ||
+            (container.childCount == 1 && container.getChildAt(0) != stickerOverlayView)
+        ) {
+            Log.d(TAG, "renderStickerOverlay -> recreating overlay view (childCount=${container.childCount})")
+            container.removeAllViews()
+            stickerOverlayView = null
+            lastAppliedStickerId = null
+        }
+
+        val isNewOverlay = stickerOverlayView == null
+        val overlay = stickerOverlayView ?: StickerOverlayView(requireContext()).also { newOverlay ->
+            val params = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER
+            )
+            container.addView(newOverlay, params)
+            newOverlay.listener = buildStickerOverlayListener(layer.id)
+            stickerOverlayView = newOverlay
+        }
+
+        if (layer.emojiContent.isNotEmpty()) {
+            overlay.setEmoji(layer.emojiContent)
+        } else if (layer.resourceId > 0) {
+            overlay.setStickerDrawable(layer.resourceId)
+        }
+
+        Log.d(
+            TAG,
+            "renderStickerOverlay CALLED -> isNewOverlay=$isNewOverlay " +
+                    "incoming(id=${layer.id}, scale=${layer.scale}, x=${layer.x}, y=${layer.y}, rot=${layer.rotation}) " +
+                    "cached(id=$lastAppliedStickerId, scale=$lastAppliedStickerScale, x=$lastAppliedStickerX, y=$lastAppliedStickerY, rot=$lastAppliedStickerRotation)"
+        )
+
+        val alreadyApplied = !isNewOverlay &&
+                lastAppliedStickerId == layer.id &&
+                lastAppliedStickerScale == layer.scale &&
+                lastAppliedStickerX == layer.x &&
+                lastAppliedStickerY == layer.y &&
+                lastAppliedStickerRotation == layer.rotation
+
+        if (alreadyApplied) {
+            Log.d(TAG, "renderStickerOverlay SKIP -> alreadyApplied=true (no visual change)")
+            return
+        }
+
+        val imageRect = fittedImageRect(containerWidth, containerHeight, currentPreviewBitmapForOverlay())
+        val baseSizePx = imageRect.width() * STICKER_BASE_SIZE_RATIO
+
+        Log.d(
+            TAG,
+            "renderStickerOverlay APPLY -> imageRect=$imageRect baseSizePx=$baseSizePx " +
+                    "willSetScale=${layer.scale} finalVisualSizePx=${baseSizePx * layer.scale}"
+        )
+
+        // FIX: base size fixed, layer.scale NEVER multiplied in here again
+        overlay.setBaseEmojiSizePx(baseSizePx)
+        overlay.setScale(layer.scale)
+        overlay.rotation = layer.rotation
+
+        val targetCenterX = imageRect.left + layer.x * imageRect.width()
+        val targetCenterY = imageRect.top + layer.y * imageRect.height()
+        overlay.translationX = targetCenterX - containerWidth / 2f
+        overlay.translationY = targetCenterY - containerHeight / 2f
+
+        Log.d(
+            TAG,
+            "renderStickerOverlay APPLIED -> translationX=${overlay.translationX} translationY=${overlay.translationY} " +
+                    "overlay.scaleFactor=${overlay.scaleFactor} overlay.rotation=${overlay.rotation}"
+        )
+
+        lastAppliedStickerId = layer.id
+        lastAppliedStickerScale = layer.scale
+        lastAppliedStickerX = layer.x
+        lastAppliedStickerY = layer.y
+        lastAppliedStickerRotation = layer.rotation
+    }
+// ===== STICKER FIX END (renderStickerOverlay with logs) =====
+
+    // ===== STICKER FIX START (buildStickerOverlayListener with logs) =====
+    private fun buildStickerOverlayListener(stickerId: String) = object : StickerOverlayView.Listener {
+        override fun onTransformChanged() {
+            isStickerOverlayTransforming = true
+        }
+
+        override fun onTransformCommitted() {
+            isStickerOverlayTransforming = false
+            val overlay = stickerOverlayView ?: return
+            val layer =
+                viewModel.editorState.value.stickerLayers.firstOrNull { it.id == stickerId } ?: return
+
+            val container = binding.stickerOverlayContainer
+            val imageRect =
+                fittedImageRect(container.width, container.height, currentPreviewBitmapForOverlay())
+
+            val centerX = container.width / 2f + overlay.translationX
+            val centerY = container.height / 2f + overlay.translationY
+
+            val finalScale = overlay.scaleFactor
+            val finalRotation = overlay.rotation % 360f
+            val finalX = ((centerX - imageRect.left) / imageRect.width()).coerceIn(0f, 1f)
+            val finalY = ((centerY - imageRect.top) / imageRect.height()).coerceIn(0f, 1f)
+
+            Log.d(
+                TAG,
+                "onTransformCommitted -> id=$stickerId overlay.scaleFactor=${overlay.scaleFactor} " +
+                        "translationX=${overlay.translationX} translationY=${overlay.translationY} " +
+                        "computed finalScale=$finalScale finalX=$finalX finalY=$finalY finalRotation=$finalRotation"
+            )
+
+            lastAppliedStickerId = stickerId
+            lastAppliedStickerScale = finalScale
+            lastAppliedStickerX = finalX
+            lastAppliedStickerY = finalY
+            lastAppliedStickerRotation = finalRotation
+
+            viewModel.updateSticker(
+                layer.copy(
+                    x = finalX,
+                    y = finalY,
+                    scale = finalScale,
+                    rotation = finalRotation
+                )
+            )
+        }
+
+        override fun onDeleteRequested() {
+            Log.d(TAG, "onDeleteRequested -> id=$stickerId")
+            viewModel.removeSticker(stickerId)
+        }
+    }
+// ===== STICKER FIX END (buildStickerOverlayListener with logs) =====
+
+    private fun removeStickerOverlay() {
+        stickerOverlayView?.let { binding.stickerOverlayContainer.removeView(it) }
+        stickerOverlayView = null
+        lastAppliedStickerId = null
+        lastAppliedStickerScale = Float.NaN
+        lastAppliedStickerX = Float.NaN
+        lastAppliedStickerY = Float.NaN
+        lastAppliedStickerRotation = Float.NaN
+    }
+
     private fun currentPreviewBitmapForOverlay(): Bitmap? =
         (viewModel.uiState.value as? EditorUiState.Editing)?.previewBitmap
 
-    /** [PhotoEditorView.source] ka `FIT_CENTER` letterboxed rect (container ke andar). */
     private fun fittedImageRect(containerWidth: Int, containerHeight: Int, bitmap: Bitmap?): RectF {
         val cw = containerWidth.toFloat().coerceAtLeast(1f)
         val ch = containerHeight.toFloat().coerceAtLeast(1f)
@@ -434,8 +676,6 @@ class PhotoStudioFragment :
             RectF(left, 0f, left + fittedWidth, ch)
         }
     }
-
-    // ═══════════════════════════════════════════════════════════════════════
 
     private fun renderEditingState(state: EditorUiState.Editing) {
         showLoading(false)
@@ -481,7 +721,6 @@ class PhotoStudioFragment :
             EditorTool.TEXT -> showTextBottomSheet()
             EditorTool.STICKER -> showStickerBottomSheet()
             EditorTool.FRAME -> showFrameBottomSheet()
-            EditorTool.ENHANCE -> showEnhanceBottomSheet()
             else -> showToast("$tool coming soon")
         }
     }
@@ -534,18 +773,6 @@ class PhotoStudioFragment :
         ).show(childFragmentManager, "effect")
     }
 
-    private fun showEnhanceBottomSheet() {
-        val currentBitmap = getCurrentPreviewBitmapSafe() ?: return
-        val currentUri = viewModel.editorState.value.baseImageUri?.let { Uri.parse(it) }
-
-        EnhanceBottomSheet.newInstance(
-            imageUri = currentUri,
-            sourceBitmap = currentBitmap,
-            imageView = photoEditorView.source,
-            onDismissed = { syncDisplayedBitmapToViewModel() }
-        ).show(childFragmentManager, "enhance")
-    }
-
     private fun showFrameBottomSheet() {
         viewLifecycleOwner.lifecycleScope.launch {
             showLoading(true)
@@ -571,15 +798,16 @@ class PhotoStudioFragment :
 
         DoodleBottomSheet.newInstance(
             photoEditorView = photoEditorView,
-            photoEditor = photoEditor,
+            photoEditor = photoEditor
+        ).apply {
             onDoodleApplied = {
                 photoEditor.setBrushDrawingMode(false)
                 showToast("Doodle applied")
-            },
+            }
             onStrokeCompleted = { doodlePath ->
                 viewModel.addDoodle(doodlePath)
             }
-        ).show(childFragmentManager, "doodle")
+        }.show(childFragmentManager, "doodle")
     }
 
     private fun showRotateBottomSheet() {
@@ -588,8 +816,17 @@ class PhotoStudioFragment :
     }
 
     private fun showTextBottomSheet(existingTextId: String? = null) {
-        TextInputBottomSheet.newInstance(existingTextId)
-            .show(childFragmentManager, "text_input")
+        if (existingTextId != null) {
+            viewModel.setActiveTextId(existingTextId)
+        } else {
+            val newLayer = TextLayer(
+                id = java.util.UUID.randomUUID().toString(),
+                text = ""
+            )
+            viewModel.addText(newLayer)
+            viewModel.setActiveTextId(newLayer.id)
+        }
+        TextEditorBottomSheet.newInstance().show(childFragmentManager, "text_editor")
     }
 
     private fun showStickerBottomSheet() {
@@ -605,56 +842,7 @@ class PhotoStudioFragment :
         val uriString = viewModel.editorState.value.baseImageUri ?: run {
             showToast("No image to crop"); return
         }
-        val sourceUri = Uri.parse(uriString)
-        val destUri = Uri.fromFile(
-            File(requireContext().cacheDir, "cropped_${System.currentTimeMillis()}.jpg")
-        )
-
-        val options = UCrop.Options().apply {
-            setToolbarColor(ContextCompat.getColor(requireContext(), R.color.black))
-            setStatusBarColor(ContextCompat.getColor(requireContext(), R.color.black))
-            setActiveControlsWidgetColor(ContextCompat.getColor(requireContext(), R.color.white))
-            setToolbarWidgetColor(ContextCompat.getColor(requireContext(), R.color.white))
-            setToolbarTitle("Crop Image")
-            setCompressionFormat(Bitmap.CompressFormat.JPEG)
-            setCompressionQuality(95)
-            setMaxBitmapSize(10000)
-            setShowCropGrid(true)
-            setShowCropFrame(true)
-            setCropGridStrokeWidth(2)
-            setCropGridColor(ContextCompat.getColor(requireContext(), R.color.white))
-            setCropFrameColor(ContextCompat.getColor(requireContext(), R.color.white))
-            setHideBottomControls(false)
-            setFreeStyleCropEnabled(true)
-            setAllowedGestures(UCropActivity.SCALE, UCropActivity.ROTATE, UCropActivity.ALL)
-            setRootViewBackgroundColor(ContextCompat.getColor(requireContext(), R.color.black))
-        }
-
-        val uCrop = UCrop.of(sourceUri, destUri).withOptions(options)
-        aspectRatio?.let { ratio ->
-            when {
-                ratio == 1f -> uCrop.withAspectRatio(1f, 1f)
-                ratio < 1f -> uCrop.withAspectRatio(1f, 1f / ratio)
-                else -> uCrop.withAspectRatio(ratio, 1f)
-            }
-        }
-        cropLauncher.launch(uCrop.getIntent(requireContext()))
-    }
-
-    private fun handleCropResult(result: ActivityResult) {
-        when (result.resultCode) {
-            Activity.RESULT_OK -> {
-                result.data?.let { UCrop.getOutput(it) }?.let { croppedUri ->
-                    viewModel.applyCrop(croppedUri)
-                    showToast("Image cropped")
-                }
-            }
-
-            UCrop.RESULT_ERROR -> {
-                val error = result.data?.let { UCrop.getError(it) }
-                showToast(error?.message ?: "Crop failed")
-            }
-        }
+        cropFeature.launch(requireContext(), Uri.parse(uriString), aspectRatio)
     }
 
     private fun toggleCompare() {
@@ -683,6 +871,7 @@ class PhotoStudioFragment :
             if (child != photoEditorView.source) child.visibility = visibility
         }
         binding.textOverlayContainer.visibility = visibility
+        binding.stickerOverlayContainer.visibility = visibility
     }
 
     private fun toggleFullscreen() {
@@ -871,6 +1060,7 @@ class PhotoStudioFragment :
         if (::photoEditor.isInitialized) photoEditor.clearAllViews()
         binding.rvEditorTools.adapter = null
         removeTextOverlay()
+        removeStickerOverlay()
         progressDialog?.dismiss()
         progressDialog = null
     }

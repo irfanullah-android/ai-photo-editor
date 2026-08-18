@@ -15,7 +15,6 @@ import com.editor.photo.video.collagemaker.photoedit.editor.layer.Layer
 import com.editor.photo.video.collagemaker.photoedit.editor.layer.LayerManager
 import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.ColorMatrixEngine
 import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.EffectsEngine
-import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.EnhanceEngine
 import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.FilterSpec
 import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.ImageProcessor
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.AdjustmentType
@@ -56,20 +55,9 @@ class EditorEngine(
 
     fun getOriginalBitmap(): Bitmap? = originalBitmap
 
+
     fun addOperation(operation: EditOperation) {
-        if (operation is EditOperation.Enhance) {
-            val current = historyManager.getActiveOperations()
-            val existingIndex = current.indexOfLast { it is EditOperation.Enhance }
-            if (existingIndex >= 0) {
-                val updated = current.toMutableList()
-                updated[existingIndex] = operation
-                historyManager.setOperations(updated)
-            } else {
-                historyManager.addOperation(operation)
-            }
-        } else {
-            historyManager.addOperation(operation)
-        }
+        historyManager.addOperation(operation)
         syncLayersFromOperations()
     }
 
@@ -224,7 +212,11 @@ class EditorEngine(
     }
 
 
-    suspend fun renderPreview(widthLimit: Int = 1080, excludeTextId: String? = null): Bitmap? =
+    suspend fun renderPreview(
+        widthLimit: Int = 1080,
+        excludeTextId: String? = null,
+        excludeStickerId: String? = null
+    ): Bitmap? =
         withContext(Dispatchers.Default) {
             val myGeneration = renderGeneration.incrementAndGet()
 
@@ -234,15 +226,23 @@ class EditorEngine(
 
             var rendered = original.copy(Bitmap.Config.ARGB_8888, true)
             val filteredOps = historyManager.getActiveOperations().filter { op ->
-                if (excludeTextId != null) {
+                val passesText = if (excludeTextId != null) {
                     when (op) {
                         is EditOperation.AddText -> op.text.id != excludeTextId
                         is EditOperation.UpdateText -> op.text.id != excludeTextId
                         else -> true
                     }
-                } else {
-                    true
-                }
+                } else true
+
+                val passesSticker = if (excludeStickerId != null) {
+                    when (op) {
+                        is EditOperation.AddSticker -> op.sticker.id != excludeStickerId
+                        is EditOperation.UpdateSticker -> op.sticker.id != excludeStickerId
+                        else -> true
+                    }
+                } else true
+
+                passesText && passesSticker
             }
             val ops = consolidateOperations(filteredOps)
 
@@ -422,26 +422,12 @@ class EditorEngine(
                 blended
             }
 
-            is EditOperation.Enhance -> {
-                // Complete 13-value snapshot rendered ONCE against whatever bitmap this
-                // operation is being applied to in the chain (original for preview/export).
-                // Never reconstructed from a single tool/intensity pair anymore.
-                val result = EnhanceEngine.render(bitmap, op.values)
-                if (result != bitmap) bitmap.recycle()
-                result
-            }
 
             is EditOperation.Crop -> {
                 val result = try {
-                    val cropData = op.cropData ?: return bitmap
-                    val left = (cropData.left * bitmap.width).toInt().coerceIn(0, bitmap.width)
-                    val top = (cropData.top * bitmap.height).toInt().coerceIn(0, bitmap.height)
-                    val right = (cropData.right * bitmap.width).toInt().coerceIn(0, bitmap.width)
-                    val bottom =
-                        (cropData.bottom * bitmap.height).toInt().coerceIn(0, bitmap.height)
-                    val w = (right - left).coerceAtLeast(1)
-                    val h = (bottom - top).coerceAtLeast(1)
-                    Bitmap.createBitmap(bitmap, left, top, w, h)
+                    context.contentResolver.openInputStream(op.croppedUri)?.use { stream ->
+                        android.graphics.BitmapFactory.decodeStream(stream)
+                    } ?: bitmap
                 } catch (e: Exception) {
                     bitmap
                 }
@@ -760,11 +746,13 @@ class EditorEngine(
     private fun drawStickerOnBitmap(bitmap: Bitmap, sticker: StickerLayer): Bitmap {
         val result = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(result)
+        val stickerBaseSizeRatio = 0.25f
+        val emojiFillRatio = 0.85f
 
         try {
             if (sticker.emojiContent.isNotEmpty()) {
-                val baseEmojiSizePx = bitmap.width * 0.10f
-                val emojiSizePx = (baseEmojiSizePx * sticker.scale).coerceAtLeast(10f)
+                val baseEmojiSizePx = bitmap.width * stickerBaseSizeRatio
+                val emojiSizePx = (baseEmojiSizePx * emojiFillRatio * sticker.scale).coerceAtLeast(10f)
 
                 val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     textSize = emojiSizePx
@@ -774,18 +762,19 @@ class EditorEngine(
 
                 val pixelX = sticker.x * bitmap.width
                 val pixelY = sticker.y * bitmap.height
+                val verticalCenterOffset = (paint.ascent() + paint.descent()) / 2f
 
                 canvas.save()
                 canvas.translate(pixelX, pixelY)
                 canvas.rotate(sticker.rotation)
-                canvas.drawText(sticker.emojiContent, 0f, 0f, paint)
+                canvas.drawText(sticker.emojiContent, 0f, -verticalCenterOffset, paint)
                 canvas.restore()
 
             } else if (sticker.resourceId > 0) {
                 @Suppress("DEPRECATION")
                 val drawable = context.resources.getDrawable(sticker.resourceId, null)
                 drawable?.let {
-                    val baseSize = (bitmap.width * 0.15f * sticker.scale).toInt().coerceAtLeast(8)
+                    val baseSize = (bitmap.width * stickerBaseSizeRatio * sticker.scale).toInt().coerceAtLeast(8)
                     val pixelX = (sticker.x * bitmap.width).toInt()
                     val pixelY = (sticker.y * bitmap.height).toInt()
 

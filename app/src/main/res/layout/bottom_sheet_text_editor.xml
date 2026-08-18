@@ -6,8 +6,59 @@
     android:background="#191919"
     android:orientation="vertical">
 
+    <!-- Top: EditText box, chota clear/X button uske andar right side me -->
+    <LinearLayout
+        android:id="@+id/textInputContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#191919"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="8dp">
 
-    <!-- Top intensity / text size slider alone -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:id="@+id/etTextEditorInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_edit_text_box"
+                android:hint="@string/text_editor_hint"
+                android:imeOptions="actionDone"
+                android:inputType="textCapSentences|textMultiLine|textAutoCorrect"
+                android:maxLines="3"
+                android:paddingStart="14dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="42dp"
+                android:paddingBottom="10dp"
+                android:textColor="@android:color/white"
+                android:textColorHint="#80FFFFFF"
+                android:textSize="18sp" />
+
+            <ImageButton
+                android:id="@+id/btnTextClear"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_handle_circle"
+                android:padding="6dp"
+                android:src="@drawable/ic_cross"/>
+
+        </FrameLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#2A2A2A" />
+
+    <!-- Intensity row: cross (cancel) - seekbar - check (confirm) -->
     <LinearLayout
         android:id="@+id/intensityContainer"
         android:layout_width="match_parent"
@@ -20,17 +71,38 @@
         android:paddingEnd="16dp"
         android:paddingBottom="6dp">
 
+        <ImageButton
+            android:id="@+id/btnTextCancel"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/bg_handle_circle"
+            android:padding="7dp"
+            android:src="@drawable/ic_cross"
+            android:contentDescription="@string/text_editor_cancel" />
+
         <SeekBar
             android:id="@+id/sbTextIntensity"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:max="200"
             android:progressBackgroundTint="#3A3A3A"
             android:progressTint="@android:color/white"
             android:thumbTint="@android:color/white" />
+
+        <ImageButton
+            android:id="@+id/btnTextConfirm"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/bg_handle_circle"
+            android:padding="7dp"
+            android:src="@drawable/ic_check"
+            android:contentDescription="@string/text_editor_done" />
     </LinearLayout>
 
-    <!-- Tools bar with + Add Text capsule at start followed by rvTools -->
+    <!-- Tools bar: sirf rvTools -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="54dp"
@@ -40,32 +112,16 @@
         android:paddingStart="12dp"
         android:paddingEnd="4dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnAddTextCapsule"
-            style="@style/Widget.MaterialComponents.Button"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_marginEnd="6dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp"
-            android:text="+ Add Text"
-            android:textAllCaps="false"
-            android:textColor="@android:color/white"
-            android:textSize="13sp"
-            app:backgroundTint="#3D8BFF"
-            app:cornerRadius="18dp" />
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvTools"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1"
             android:clipToPadding="false"
             android:paddingStart="2dp"
             android:paddingEnd="4dp" />
     </LinearLayout>
 
-    <!-- Selected tool ka panel yahan swap hota hai -->
+
     <FrameLayout
         android:id="@+id/toolContentContainer"
         android:layout_width="match_parent"

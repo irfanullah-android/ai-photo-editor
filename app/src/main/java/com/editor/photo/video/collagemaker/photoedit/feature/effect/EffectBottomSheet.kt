@@ -1,6 +1,5 @@
 package com.editor.photo.video.collagemaker.photoedit.feature.effect
 
-import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EffectType
 import android.app.Dialog
 import android.content.DialogInterface
 import android.graphics.Bitmap
@@ -17,11 +16,11 @@ import android.widget.ImageView
 import android.widget.SeekBar
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.bottomsheet.BottomSheetDialog
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.editor.photo.video.collagemaker.photoedit.R
 import com.editor.photo.video.collagemaker.photoedit.adapters.EffectNameAdapter
 import com.editor.photo.video.collagemaker.photoedit.adapters.bottomsheetsadapter.EffectAdapter
@@ -29,6 +28,9 @@ import com.editor.photo.video.collagemaker.photoedit.databinding.BottomSheetEffe
 import com.editor.photo.video.collagemaker.photoedit.editor.session.EditorSessionViewModel
 import com.editor.photo.video.collagemaker.photoedit.fragments.imageRenderEngine.EffectsEngine
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EffectModel
+import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.EffectType
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import kotlinx.coroutines.*
 import kotlin.math.max
 
@@ -62,7 +64,6 @@ class EffectBottomSheet : BottomSheetDialogFragment() {
 
     private var intensityJob: Job? = null
     private var effectJob: Job? = null
-    private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val blendPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
 
@@ -182,29 +183,49 @@ class EffectBottomSheet : BottomSheetDialogFragment() {
 
     private fun setupListeners() {
         binding.ivCheck.setOnClickListener {
+            if (isClosing) return@setOnClickListener
             wasApplied = true
+            isClosing = true
+
+            // 1. Cancel running jobs immediately
+            effectJob?.cancel()
+            intensityJob?.cancel()
+
+            // 2. Optimistic Preview Handoff: Retain current render on parent ImageView
+            val activeRender = lastBlendedBitmap ?: filteredBitmap ?: displayBase
+            if (activeRender != null && !activeRender.isRecycled) {
+                imageView?.setImageBitmap(activeRender)
+            }
+
+            // 3. Dispatch changes to Session ViewModel
             sessionViewModel.applyEffect(
                 effectViewModel.selectedEffect.value,
                 effectViewModel.intensity.value
             )
-            dismiss()
+
+            // 4. Dismiss immediately
+            dismissAllowingStateLoss()
         }
     }
 
     private fun observeViewModel() {
-        lifecycleScope.launchWhenStarted {
-            effectViewModel.selectedEffect.collect { type ->
-                updateSeekBarVisibility(type)
-                applyEffect(type)
-            }
-        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    effectViewModel.selectedEffect.collect { type ->
+                        updateSeekBarVisibility(type)
+                        applyEffect(type)
+                    }
+                }
 
-        lifecycleScope.launchWhenStarted {
-            effectViewModel.intensity.collect { intensity ->
-                binding.seekBarIntensity.progress = (intensity * 100).toInt()
-                binding.tvIntensityValue.text = (intensity * 100).toInt().toString()
-                if (effectViewModel.selectedEffect.value != EffectType.NONE) {
-                    applyIntensityPreview()
+                launch {
+                    effectViewModel.intensity.collect { intensity ->
+                        binding.seekBarIntensity.progress = (intensity * 100).toInt()
+                        binding.tvIntensityValue.text = (intensity * 100).toInt().toString()
+                        if (effectViewModel.selectedEffect.value != EffectType.NONE) {
+                            applyIntensityPreview()
+                        }
+                    }
                 }
             }
         }
@@ -223,7 +244,7 @@ class EffectBottomSheet : BottomSheetDialogFragment() {
     private fun applyEffect(type: EffectType) {
         if (isClosing) return
         effectJob?.cancel()
-        effectJob = coroutineScope.launch {
+        effectJob = viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
             try {
                 val bitmap = originalBitmap ?: return@launch
                 withContext(Dispatchers.Main) {
@@ -269,6 +290,7 @@ class EffectBottomSheet : BottomSheetDialogFragment() {
                     }
                 }
 
+                // Recycle previous intermediate bitmaps safely
                 oldDisplayBase?.let { if (!it.isRecycled) it.recycle() }
                 oldFiltered?.let { if (!it.isRecycled && it != oldDisplayBase) it.recycle() }
                 oldBlended?.let { if (!it.isRecycled && it != oldDisplayBase && it != oldFiltered) it.recycle() }
@@ -287,17 +309,27 @@ class EffectBottomSheet : BottomSheetDialogFragment() {
         if (isClosing) return
         val original = previewOriginal ?: return
         val filtered = previewFiltered ?: return
-        val blended = blendBitmapsFast(original, filtered, effectViewModel.intensity.value)
-        if (isClosing) {
-            blended.recycle()
-            return
+
+        intensityJob?.cancel()
+        intensityJob = viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
+            val blended = blendBitmapsFast(original, filtered, effectViewModel.intensity.value)
+            if (!isActive || isClosing) {
+                blended.recycle()
+                return@launch
+            }
+            withContext(Dispatchers.Main) {
+                if (!isClosing) {
+                    imageView?.setImageBitmap(blended)
+                } else {
+                    blended.recycle()
+                }
+            }
         }
-        imageView?.setImageBitmap(blended)
     }
 
     private fun applyIntensityDisplayQuality() {
         if (isClosing) return
-        coroutineScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
             try {
                 val base = displayBase ?: return@launch
                 val filtered = filteredBitmap ?: return@launch
@@ -354,9 +386,13 @@ class EffectBottomSheet : BottomSheetDialogFragment() {
         effectJob?.cancel()
         intensityJob?.cancel()
 
-        displayBase?.let { if (!it.isRecycled) it.recycle() }
-        filteredBitmap?.let { if (!it.isRecycled && it != displayBase) it.recycle() }
-        lastBlendedBitmap?.let { if (!it.isRecycled && it != displayBase && it != filteredBitmap) it.recycle() }
+        // Only recycle temporary scale bitmaps when dismissed WITHOUT applying
+        if (!wasApplied) {
+            displayBase?.let { if (!it.isRecycled) it.recycle() }
+            filteredBitmap?.let { if (!it.isRecycled && it != displayBase) it.recycle() }
+            lastBlendedBitmap?.let { if (!it.isRecycled && it != displayBase && it != filteredBitmap) it.recycle() }
+        }
+
         previewOriginal?.let { if (!it.isRecycled) it.recycle() }
         previewFiltered?.let { if (!it.isRecycled) it.recycle() }
 
@@ -367,19 +403,12 @@ class EffectBottomSheet : BottomSheetDialogFragment() {
         previewFiltered = null
     }
 
-    private fun cleanup() {
+    override fun onDestroyView() {
         isClosing = true
         intensityJob?.cancel()
         effectJob?.cancel()
-        coroutineScope.cancel()
-        originalBitmap?.let { if (!it.isRecycled) imageView?.setImageBitmap(it) }
         releasePreviewBitmaps()
         imageView = null
-    }
-
-    override fun onDestroyView() {
-        cleanup()
-        originalBitmap = null
         super.onDestroyView()
     }
 

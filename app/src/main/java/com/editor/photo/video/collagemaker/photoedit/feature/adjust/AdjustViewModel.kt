@@ -20,9 +20,13 @@ class AdjustViewModel : ViewModel() {
 
     fun initAdjustments(initialList: List<AdjustmentModel>) {
         _adjustments.value = initialList
-        if (initialList.isNotEmpty() && _selectedAdjustment.value == null) {
-            _selectedAdjustment.value = initialList[0]
+
+        if (_selectedAdjustment.value == null) {
+            _selectedAdjustment.value = initialList.firstOrNull { it.isSelected }
+                ?: initialList.firstOrNull()
         }
+
+        // Auto سمیت تمام ایڈجسٹمنٹس کی ابتدائی ویلیوز شامل کی گئی ہیں
         val initialValues = initialList.associate { it.type to it.value }
         _adjustmentValues.value = initialValues
     }
@@ -36,16 +40,34 @@ class AdjustViewModel : ViewModel() {
         currentValues[type] = value
         _adjustmentValues.value = currentValues
 
-        // Update list
         val currentList = _adjustments.value.map {
             if (it.type == type) it.copy(value = value) else it
         }
         _adjustments.value = currentList
 
-        // Update selected if applicable
         val selected = _selectedAdjustment.value
         if (selected != null && selected.type == type) {
             _selectedAdjustment.value = selected.copy(value = value)
+        }
+    }
+
+    fun updateValues(values: Map<AdjustmentType, Int>) {
+        val currentValues = _adjustmentValues.value.toMutableMap()
+        values.forEach { (type, value) -> currentValues[type] = value }
+        _adjustmentValues.value = currentValues
+
+        val currentList = _adjustments.value.map { adj ->
+            val newValue = values[adj.type]
+            if (newValue != null) adj.copy(value = newValue) else adj
+        }
+        _adjustments.value = currentList
+
+        val selected = _selectedAdjustment.value
+        if (selected != null) {
+            val newValue = values[selected.type]
+            if (newValue != null) {
+                _selectedAdjustment.value = selected.copy(value = newValue)
+            }
         }
     }
 }

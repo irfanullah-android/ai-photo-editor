@@ -135,7 +135,7 @@ class FilterAdapter(
                 return thumbnail
             }
 
-            val spec = filter.buildFilterSpec(80)
+            val spec = filter.buildFilterSpec(100)
             val filteredBitmap = ColorMatrixEngine.render(thumbnail, spec)
 
             if (thumbnail != bitmap && thumbnail != filteredBitmap) {

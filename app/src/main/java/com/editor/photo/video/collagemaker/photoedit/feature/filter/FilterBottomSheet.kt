@@ -3,6 +3,7 @@ package com.editor.photo.video.collagemaker.photoedit.feature.filter
 import android.app.Dialog
 import android.content.DialogInterface
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Typeface
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
@@ -35,6 +36,7 @@ class FilterBottomSheet : BottomSheetDialogFragment() {
     private lateinit var binding: BottomSheetFilterBinding
     private var imageView: ImageView? = null
     private var imageUri: Uri? = null
+    private var renderJob: Job? = null
     private var sourceBitmap: Bitmap? = null
     private var onDismissed: (() -> Unit)? = null
 
@@ -75,12 +77,37 @@ class FilterBottomSheet : BottomSheetDialogFragment() {
     private fun loadOriginalBitmap() {
         try {
             baselineBitmap = (imageView?.drawable as? BitmapDrawable)?.bitmap
-            originalBitmap = sourceBitmap ?: baselineBitmap ?: imageUri?.let {
-                @Suppress("DEPRECATION")
-                MediaStore.Images.Media.getBitmap(requireContext().contentResolver, it)
-            }
+
+            originalBitmap = sourceBitmap
+                ?: imageUri?.let { loadDecentResolutionBitmap(it) }
+                        ?: baselineBitmap
         } catch (e: Exception) {
             e.printStackTrace()
+            originalBitmap = sourceBitmap ?: baselineBitmap
+        }
+    }
+    private fun loadDecentResolutionBitmap(uri: Uri): Bitmap? {
+        return try {
+            val resolver = requireContext().contentResolver
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+
+            val srcW = bounds.outWidth
+            val srcH = bounds.outHeight
+            if (srcW <= 0 || srcH <= 0) return null
+
+            // Comfortably above what any thumbnail (~256px on xxxhdpi) needs.
+            val targetMinSide = 900
+            var sampleSize = 1
+            while ((minOf(srcW, srcH) / sampleSize) > targetMinSide * 2) {
+                sampleSize *= 2
+            }
+
+            val opts = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+            resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
     }
 
@@ -109,24 +136,20 @@ class FilterBottomSheet : BottomSheetDialogFragment() {
             filterViewModel.selectedFilter.collect { filter ->
                 updateSeekBarVisibility(filter)
                 val position = EditorFilter.values().indexOf(filter)
-                
+
                 filterNamesAdapter?.updateSelection(position)
                 binding.rvFilterNames.smoothScrollToPosition(position)
-                
+
                 filterAdapter?.updateSelection(position)
                 binding.rvFilters.smoothScrollToPosition(position)
-                
+
+                binding.seekBarIntensity.progress = filterViewModel.intensity.value
+                binding.tvIntensity.text = filterViewModel.intensity.value.toString()
+
                 applyFilter(filter, filterViewModel.intensity.value)
             }
         }
 
-        lifecycleScope.launchWhenStarted {
-            filterViewModel.intensity.collect { intensity ->
-                binding.seekBarIntensity.progress = intensity
-                binding.tvIntensity.text = intensity.toString()
-                applyFilter(filterViewModel.selectedFilter.value, intensity)
-            }
-        }
     }
 
     private fun updateSeekBarVisibility(filter: EditorFilter) {
@@ -143,6 +166,8 @@ class FilterBottomSheet : BottomSheetDialogFragment() {
         binding.seekBarIntensity.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (!fromUser) return
+                binding.tvIntensity.text = progress.toString()
+                applyFilter(filterViewModel.selectedFilter.value, progress)
                 filterViewModel.setIntensity(progress)
             }
 
@@ -158,11 +183,18 @@ class FilterBottomSheet : BottomSheetDialogFragment() {
 
         binding.ivCheck.setOnClickListener {
             wasApplied = true
+            renderJob?.cancel()
+            imageView?.colorFilter = null
+
             sessionViewModel.applyFilter(
                 filterViewModel.selectedFilter.value,
                 filterViewModel.intensity.value
             )
-            dismiss()
+
+
+            binding.root.post {
+                dismiss()
+            }
         }
     }
 
@@ -181,38 +213,42 @@ class FilterBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun applyFilter(filter: EditorFilter, intensity: Int) {
-        filterJob?.cancel()
-        imageView?.colorFilter = null
+        renderJob?.cancel()
 
         if (filter == EditorFilter.NORMAL) {
+            imageView?.colorFilter = null
             imageView?.setImageBitmap(originalBitmap)
             return
         }
 
         val bitmap = originalBitmap ?: return
-        filterJob = coroutineScope.launch {
-            val spec = filter.buildFilterSpec(intensity)
-            val newBitmap = ColorMatrixEngine.render(bitmap, spec)
+        val spec = filter.buildFilterSpec(intensity)
+        imageView?.setImageBitmap(bitmap)
+        imageView?.colorFilter = ColorMatrixEngine.asColorFilter(spec)
+        if (spec.vignette != null) {
+            renderJob = coroutineScope.launch {
+                delay(120)
+                val newBitmap = ColorMatrixEngine.render(bitmap, spec)
+                withContext(Dispatchers.Main) {
+                    if (!isActive) {
+                        newBitmap.recycle()
+                        return@withContext
+                    }
+                    imageView?.colorFilter = null
+                    imageView?.setImageBitmap(newBitmap)
 
-            withContext(Dispatchers.Main) {
-                if (!isActive) {
-                    newBitmap.recycle()
-                    return@withContext
-                }
-
-                imageView?.setImageBitmap(newBitmap)
-
-                val oldBitmap = lastBitmap
-                lastBitmap = newBitmap
-                if (oldBitmap != null && oldBitmap != originalBitmap) {
-                    oldBitmap.recycle()
+                    val oldBitmap = lastBitmap
+                    lastBitmap = newBitmap
+                    if (oldBitmap != null && oldBitmap != originalBitmap) {
+                        oldBitmap.recycle()
+                    }
                 }
             }
         }
     }
 
     private fun cleanup() {
-        filterJob?.cancel()
+        renderJob?.cancel()
         lastBitmap = null
     }
 
