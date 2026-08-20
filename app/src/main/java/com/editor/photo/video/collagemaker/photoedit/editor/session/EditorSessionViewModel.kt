@@ -78,15 +78,24 @@ class EditorSessionViewModel @Inject constructor(
     private val _activeStickerId = MutableStateFlow<String?>(null)
     val activeStickerId: StateFlow<String?> = _activeStickerId.asStateFlow()
 
-    private var refreshJob: Job? = null
+    private var loadJob: Job? = null
+    private var refreshJob: Job? = null   // <-- keep this too, unchanged
 
     fun loadImage(uri: Uri) {
-        viewModelScope.launch(Dispatchers.Default) {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch(Dispatchers.Default) {
             withContext(Dispatchers.Main) { _uiState.value = EditorUiState.Loading }
             loadImageUseCase(uri)
             withContext(Dispatchers.Main) {
                 _editorState.value = EditorState(baseImageUri = uri.toString())
             }
+            refreshPreviewInternal()
+        }
+    }
+
+    fun refreshPreview() {
+        refreshJob?.cancel()
+        refreshJob = viewModelScope.launch(Dispatchers.Default) {
             refreshPreviewInternal()
         }
     }
@@ -220,16 +229,7 @@ class EditorSessionViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Public refresh called by UI controllers.
-     * Automatically cancels previous stale render requests to avoid queue contention.
-     */
-    fun refreshPreview() {
-        refreshJob?.cancel()
-        refreshJob = viewModelScope.launch(Dispatchers.Default) {
-            refreshPreviewInternal()
-        }
-    }
+
 
     fun exportImage(filename: String) {
         viewModelScope.launch {

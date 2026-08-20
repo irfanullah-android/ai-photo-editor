@@ -8,6 +8,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
@@ -29,6 +30,10 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
     private val baseStrokeWidthPx = dp(2f)
     private val baseCornerRadiusPx = dp(6).toFloat()
 
+    private var bodyTransformChanged = false
+    private var rotateChanged = false
+    private var resizeChanged = false
+
     private val borderDrawable = GradientDrawable().apply {
         setColor(Color.TRANSPARENT)
         setStroke(baseStrokeWidthPx, SELECTION_BORDER_COLOR)
@@ -37,6 +42,8 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
 
     private val selectionBorder = View(context).apply {
         background = borderDrawable
+        isClickable = false
+        isFocusable = false
     }
 
     val boxContainer = FrameLayout(context)
@@ -67,18 +74,35 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
     /**
      * SINGLE SOURCE OF TRUTH for user-applied scale.
      *
-     * `baseEmojiSizePx` (the actual laid-out pixel size of the content box)
-     * is fixed and derived only from the image width — it must NEVER be
-     * multiplied by this value. `scaleFactor` is the only place the user's
-     * zoom/resize is represented, and it is what gets persisted 1:1 into
-     * StickerLayer.scale. This avoids "double scaling" across renders.
+     * baseEmojiSizePx is the fixed base size.
+     * scaleFactor is the absolute user-applied scale.
+     *
+     * StickerLayer.scale is persisted 1:1 from this value.
+     *
+     * IMPORTANT:
+     * Never multiply layer.scale by scaleFactor.
      */
     var scaleFactor: Float = 1f
         private set
 
-    private enum class BodyMode { NONE, DRAG, TRANSFORM }
+    private enum class BodyMode {
+        NONE,
+        DRAG,
+        TRANSFORM
+    }
 
     private var bodyMode = BodyMode.NONE
+
+    private val touchSlop by lazy {
+        ViewConfiguration.get(context).scaledTouchSlop
+    }
+
+    // Transform safety slop flags
+    private var isTransformStarted = false
+    private var handleDragging = false
+    private var initialDownX = 0f
+    private var initialDownY = 0f
+
     private var dragPointerId = MotionEvent.INVALID_POINTER_ID
     private var lastDragRawX = 0f
     private var lastDragRawY = 0f
@@ -93,39 +117,59 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
     private var pinchStartMidY = 0f
     private var pinchStartTranslationX = 0f
     private var pinchStartTranslationY = 0f
-
     private var lastPinchAngle = 0f
 
-    private var baseEmojiSizePx: Float = dp(DEFAULT_STICKER_SIZE_DP).toFloat()
+    private var baseEmojiSizePx = dp(DEFAULT_STICKER_SIZE_DP).toFloat()
+
+    private var rotateCenter = floatArrayOf(0f, 0f)
+    private var rotateLastAngle = 0f
+
+    private var resizeCenter = floatArrayOf(0f, 0f)
+    private var resizeInitialDistance = 1f
+    private var resizeInitialScale = 1f
 
     init {
         setWillNotDraw(false)
+
         clipChildren = false
         clipToPadding = false
 
         val margin = hotspotSize / 2
         val frameSize = frameSizePx()
+
         val borderParams = LayoutParams(frameSize, frameSize, Gravity.CENTER).apply {
             setMargins(margin, margin, margin, margin)
         }
         addView(selectionBorder, borderParams)
 
         val contentSide = baseEmojiSizePx.toInt()
+
         val boxParams = LayoutParams(contentSide, contentSide, Gravity.CENTER)
         val contentParams = LayoutParams(contentSide, contentSide, Gravity.CENTER)
+
         boxContainer.addView(contentText, contentParams)
         boxContainer.addView(contentImage, LayoutParams(contentSide, contentSide, Gravity.CENTER))
+
         addView(boxContainer, boxParams)
 
         addHandle(hotspotDelete, Gravity.TOP or Gravity.END)
         addHandle(hotspotRotate, Gravity.BOTTOM or Gravity.START)
         addHandle(hotspotResize, Gravity.BOTTOM or Gravity.END)
 
-        hotspotDelete.setOnClickListener { listener?.onDeleteRequested() }
-        hotspotRotate.setOnTouchListener { _, event -> handleRotateTouch(event) }
-        hotspotResize.setOnTouchListener { _, event -> handleResizeTouch(event) }
+        hotspotDelete.setOnClickListener {
+            listener?.onDeleteRequested()
+        }
+
+        hotspotRotate.setOnTouchListener { _, event ->
+            handleRotateTouch(event)
+        }
+
+        hotspotResize.setOnTouchListener { _, event ->
+            handleResizeTouch(event)
+        }
 
         boxContainer.visibility = View.VISIBLE
+
         updatePivots()
         applyScaleToContent()
     }
@@ -134,8 +178,8 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
         return ImageView(context).apply {
             setImageResource(iconRes)
             background = context.getDrawable(R.drawable.bg_sticker_handle_circle)
-            val p = dp(4)
-            setPadding(p, p, p, p)
+            val padding = dp(4)
+            setPadding(padding, padding, padding, padding)
             elevation = dp(2).toFloat()
         }
     }
@@ -154,28 +198,57 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
         addView(hotspot, params)
     }
 
+    /**
+     * Expand the touch bounds of this root view out to the translated hotspots
+     * so that touches outside the unscaled center aren't dropped by the parent container.
+     */
+    override fun getHitRect(outRect: Rect) {
+        super.getHitRect(outRect)
+        val scale = scaleFactor.coerceIn(MIN_SCALE_FACTOR, MAX_SCALE_FACTOR)
+        if (scale > 1f) {
+            val frameHalf = frameSizePx() / 2f
+            val extent = frameHalf * (scale - 1f)
+            val inflateAmount = (extent + hotspotSize).toInt()
+            outRect.inset(-inflateAmount, -inflateAmount)
+        }
+    }
+
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
         if (ev.actionMasked == MotionEvent.ACTION_DOWN) {
-            val x = ev.x.toInt()
-            val y = ev.y.toInt()
-            val hotspots = listOf(hotspotDelete, hotspotRotate, hotspotResize)
-            val rect = Rect()
-            for (hotspot in hotspots) {
-                if (hotspot.visibility == View.VISIBLE) {
-                    hotspot.getHitRect(rect)
-                    if (rect.contains(x, y)) return false
-                }
-            }
+            val x = ev.x
+            val y = ev.y
+
+            if (isPointInsideHotspot(hotspotDelete, x, y)) return false
+            if (isPointInsideHotspot(hotspotRotate, x, y)) return false
+            if (isPointInsideHotspot(hotspotResize, x, y)) return false
+
             return true
         }
         return super.onInterceptTouchEvent(ev)
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean = handleBodyTouch(event)
+    /**
+     * Perfected local hit detection.
+     * event.x and event.y are already passed un-rotated by the parent logic.
+     * hotspot.x and hotspot.y are perfect local translations. No global Window mapping required!
+     */
+    private fun isPointInsideHotspot(hotspot: View, x: Float, y: Float): Boolean {
+        if (hotspot.visibility != View.VISIBLE) return false
 
-    private fun rawXAt(event: MotionEvent, pointerIndex: Int) = event.getRawX(pointerIndex)
+        val left = hotspot.x
+        val top = hotspot.y
+        val right = left + hotspot.width
+        val bottom = top + hotspot.height
 
-    private fun rawYAt(event: MotionEvent, pointerIndex: Int) = event.getRawY(pointerIndex)
+        return x >= left && x <= right && y >= top && y <= bottom
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        return handleBodyTouch(event)
+    }
+
+    private fun rawXAt(event: MotionEvent, pointerIndex: Int): Float = event.getRawX(pointerIndex)
+    private fun rawYAt(event: MotionEvent, pointerIndex: Int): Float = event.getRawY(pointerIndex)
 
     private fun angleDelta(from: Float, to: Float): Float {
         var delta = (to - from) % 360f
@@ -188,11 +261,20 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 bodyMode = BodyMode.DRAG
+
                 dragPointerId = event.getPointerId(0)
                 lastDragRawX = rawXAt(event, 0)
                 lastDragRawY = rawYAt(event, 0)
+
+                initialDownX = lastDragRawX
+                initialDownY = lastDragRawY
+
+                isTransformStarted = false
+                bodyTransformChanged = false
+
                 parent?.requestDisallowInterceptTouchEvent(true)
-                listener?.onTransformChanged()
+
+                // Note: Deliberately DO NOT call onTransformChanged() on simple tap
                 return true
             }
 
@@ -204,6 +286,7 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
                     event.getPointerId(if (newIndex == 0) 1 else 0)
                 }
                 val newId = event.getPointerId(newIndex)
+
                 if (existingId == newId) return true
 
                 pinchPointerId1 = existingId
@@ -212,14 +295,18 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
 
                 val i1 = event.findPointerIndex(pinchPointerId1)
                 val i2 = event.findPointerIndex(pinchPointerId2)
+
                 if (i1 == -1 || i2 == -1) return true
 
-                val x1 = rawXAt(event, i1); val y1 = rawYAt(event, i1)
-                val x2 = rawXAt(event, i2); val y2 = rawYAt(event, i2)
+                val x1 = rawXAt(event, i1)
+                val y1 = rawYAt(event, i1)
+                val x2 = rawXAt(event, i2)
+                val y2 = rawYAt(event, i2)
 
                 pinchStartDistance = hypot((x2 - x1).toDouble(), (y2 - y1).toDouble()).toFloat().coerceAtLeast(1f)
                 pinchStartScale = scaleFactor
                 pinchStartFingerAngle = Math.toDegrees(atan2((y2 - y1).toDouble(), (x2 - x1).toDouble())).toFloat()
+
                 pinchStartMidX = (x1 + x2) / 2f
                 pinchStartMidY = (y1 + y2) / 2f
                 pinchStartTranslationX = translationX
@@ -236,55 +323,91 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
                     BodyMode.DRAG -> {
                         val index = event.findPointerIndex(dragPointerId)
                         if (index == -1) return true
+
                         val currentX = rawXAt(event, index)
                         val currentY = rawYAt(event, index)
 
-                        translationX += (currentX - lastDragRawX)
-                        translationY += (currentY - lastDragRawY)
+                        if (!isTransformStarted) {
+                            val dx = currentX - initialDownX
+                            val dy = currentY - initialDownY
+                            if (hypot(dx.toDouble(), dy.toDouble()) > touchSlop) {
+                                isTransformStarted = true
+                                bodyTransformChanged = true
+                                listener?.onTransformChanged()
+                            }
+                        }
+
+                        if (isTransformStarted) {
+                            val deltaX = currentX - lastDragRawX
+                            val deltaY = currentY - lastDragRawY
+                            if (deltaX != 0f || deltaY != 0f) {
+                                translationX += deltaX
+                                translationY += deltaY
+                                bodyTransformChanged = true
+                                listener?.onTransformChanged()
+                            }
+                        }
+
                         lastDragRawX = currentX
                         lastDragRawY = currentY
-                        listener?.onTransformChanged()
                         return true
                     }
 
                     BodyMode.TRANSFORM -> {
                         val i1 = event.findPointerIndex(pinchPointerId1)
                         val i2 = event.findPointerIndex(pinchPointerId2)
+
                         if (i1 == -1 || i2 == -1) return true
 
-                        val x1 = rawXAt(event, i1); val y1 = rawYAt(event, i1)
-                        val x2 = rawXAt(event, i2); val y2 = rawYAt(event, i2)
+                        val x1 = rawXAt(event, i1)
+                        val y1 = rawYAt(event, i1)
+                        val x2 = rawXAt(event, i2)
+                        val y2 = rawYAt(event, i2)
 
                         val currentDistance = hypot((x2 - x1).toDouble(), (y2 - y1).toDouble()).toFloat().coerceAtLeast(1f)
                         val currentAngle = Math.toDegrees(atan2((y2 - y1).toDouble(), (x2 - x1).toDouble())).toFloat()
                         val currentMidX = (x1 + x2) / 2f
                         val currentMidY = (y1 + y2) / 2f
 
-                        val distanceRatio = currentDistance / pinchStartDistance
-                        scaleFactor = (pinchStartScale * distanceRatio).coerceIn(MIN_SCALE_FACTOR, MAX_SCALE_FACTOR)
-                        applyScaleToContent()
+                        if (!isTransformStarted) {
+                            val distDiff = Math.abs(currentDistance - pinchStartDistance)
+                            val angleDiff = Math.abs(angleDelta(pinchStartFingerAngle, currentAngle))
+                            val midXDiff = Math.abs(currentMidX - pinchStartMidX)
+                            val midYDiff = Math.abs(currentMidY - pinchStartMidY)
 
-                        rotation += angleDelta(lastPinchAngle, currentAngle)
+                            if (distDiff > touchSlop || angleDiff > 2f || midXDiff > touchSlop || midYDiff > touchSlop) {
+                                isTransformStarted = true
+                                bodyTransformChanged = true
+                                listener?.onTransformChanged()
+                            }
+                        }
+
+                        if (isTransformStarted) {
+                            val distanceRatio = currentDistance / pinchStartDistance
+                            scaleFactor = (pinchStartScale * distanceRatio).coerceIn(MIN_SCALE_FACTOR, MAX_SCALE_FACTOR)
+                            applyScaleToContent()
+
+                            rotation += angleDelta(lastPinchAngle, currentAngle)
+                            translationX = pinchStartTranslationX + (currentMidX - pinchStartMidX)
+
+                            bodyTransformChanged = true
+                            listener?.onTransformChanged()
+                        }
+
                         lastPinchAngle = currentAngle
-
-                        translationX = pinchStartTranslationX + (currentMidX - pinchStartMidX)
-                        translationY = pinchStartTranslationY + (currentMidY - pinchStartMidY)
-
-                        listener?.onTransformChanged()
                         return true
                     }
-
                     BodyMode.NONE -> return false
                 }
             }
 
             MotionEvent.ACTION_POINTER_UP -> {
                 val liftedId = event.getPointerId(event.actionIndex)
-                if (bodyMode == BodyMode.TRANSFORM &&
-                    (liftedId == pinchPointerId1 || liftedId == pinchPointerId2)
-                ) {
+
+                if (bodyMode == BodyMode.TRANSFORM && (liftedId == pinchPointerId1 || liftedId == pinchPointerId2)) {
                     val remainingId = if (liftedId == pinchPointerId1) pinchPointerId2 else pinchPointerId1
                     val remainingIndex = event.findPointerIndex(remainingId)
+
                     if (remainingIndex != -1) {
                         bodyMode = BodyMode.DRAG
                         dragPointerId = remainingId
@@ -299,52 +422,74 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
                 return true
             }
 
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                val wasActive = bodyMode != BodyMode.NONE
+            MotionEvent.ACTION_UP,
+            MotionEvent.ACTION_CANCEL -> {
+                val shouldCommit = bodyTransformChanged
+
                 bodyMode = BodyMode.NONE
+                bodyTransformChanged = false
+                isTransformStarted = false
+
                 dragPointerId = MotionEvent.INVALID_POINTER_ID
                 pinchPointerId1 = MotionEvent.INVALID_POINTER_ID
                 pinchPointerId2 = MotionEvent.INVALID_POINTER_ID
-                if (wasActive) {
+
+                if (shouldCommit) {
                     listener?.onTransformCommitted()
                 }
+
+                parent?.requestDisallowInterceptTouchEvent(false)
                 return true
             }
         }
         return false
     }
-
-    private var rotateCenter = floatArrayOf(0f, 0f)
-    private var rotateLastAngle = 0f
 
     private fun handleRotateTouch(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 rotateCenter = centerOnScreen()
                 rotateLastAngle = angleTo(rotateCenter, event.rawX, event.rawY)
+                rotateChanged = false
+                handleDragging = false
                 parent?.requestDisallowInterceptTouchEvent(true)
-                listener?.onTransformChanged()
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
                 parent?.requestDisallowInterceptTouchEvent(true)
                 val currentAngle = angleTo(rotateCenter, event.rawX, event.rawY)
-                rotation += angleDelta(rotateLastAngle, currentAngle)
+                val delta = angleDelta(rotateLastAngle, currentAngle)
+
+                if (!handleDragging) {
+                    if (Math.abs(delta) > 1f) {
+                        handleDragging = true
+                        rotateChanged = true
+                        listener?.onTransformChanged()
+                    }
+                }
+
+                if (handleDragging) {
+                    rotation += delta
+                    rotateChanged = true
+                    listener?.onTransformChanged()
+                }
+
                 rotateLastAngle = currentAngle
-                listener?.onTransformChanged()
                 return true
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                listener?.onTransformCommitted()
+            MotionEvent.ACTION_UP,
+            MotionEvent.ACTION_CANCEL -> {
+                if (rotateChanged) {
+                    listener?.onTransformCommitted()
+                }
+                rotateChanged = false
+                handleDragging = false
+                parent?.requestDisallowInterceptTouchEvent(false)
                 return true
             }
         }
         return false
     }
-
-    private var resizeCenter = floatArrayOf(0f, 0f)
-    private var resizeInitialDistance = 1f
-    private var resizeInitialScale = 1f
 
     private fun handleResizeTouch(event: MotionEvent): Boolean {
         when (event.actionMasked) {
@@ -352,21 +497,42 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
                 resizeCenter = centerOnScreen()
                 resizeInitialDistance = distanceTo(resizeCenter, event.rawX, event.rawY).coerceAtLeast(1f)
                 resizeInitialScale = scaleFactor
+                resizeChanged = false
+                handleDragging = false
                 parent?.requestDisallowInterceptTouchEvent(true)
-                listener?.onTransformChanged()
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
                 parent?.requestDisallowInterceptTouchEvent(true)
                 val currentDistance = distanceTo(resizeCenter, event.rawX, event.rawY).coerceAtLeast(1f)
-                scaleFactor = (resizeInitialScale * (currentDistance / resizeInitialDistance))
-                    .coerceIn(MIN_SCALE_FACTOR, MAX_SCALE_FACTOR)
-                applyScaleToContent()
-                listener?.onTransformChanged()
+
+                if (!handleDragging) {
+                    if (Math.abs(currentDistance - resizeInitialDistance) > touchSlop) {
+                        handleDragging = true
+                        resizeChanged = true
+                        listener?.onTransformChanged()
+                    }
+                }
+
+                if (handleDragging) {
+                    val newScale = (resizeInitialScale * (currentDistance / resizeInitialDistance)).coerceIn(MIN_SCALE_FACTOR, MAX_SCALE_FACTOR)
+                    if (newScale != scaleFactor) {
+                        scaleFactor = newScale
+                        applyScaleToContent()
+                        resizeChanged = true
+                        listener?.onTransformChanged()
+                    }
+                }
                 return true
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                listener?.onTransformCommitted()
+            MotionEvent.ACTION_UP,
+            MotionEvent.ACTION_CANCEL -> {
+                if (resizeChanged) {
+                    listener?.onTransformCommitted()
+                }
+                resizeChanged = false
+                handleDragging = false
+                parent?.requestDisallowInterceptTouchEvent(false)
                 return true
             }
         }
@@ -387,14 +553,6 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
         applyScaleToContent()
     }
 
-    /**
-     * Sets the FIXED base content size in px. This must be derived only from
-     * layout/image geometry (e.g. imageRect.width() * ratio) — never from
-     * layer.scale. scaleFactor is layered on top of this via applyScaleToContent().
-     *
-     * Safe to call every render: if the size hasn't actually changed, layout
-     * params are left untouched and no relayout is triggered.
-     */
     fun setBaseEmojiSizePx(px: Float) {
         val newSize = px.coerceAtLeast(dp(24).toFloat())
         if (newSize == baseEmojiSizePx) return
@@ -408,16 +566,19 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
             it.height = side
             contentText.layoutParams = it
         }
+
         (contentImage.layoutParams as? LayoutParams)?.let {
             it.width = side
             it.height = side
             contentImage.layoutParams = it
         }
+
         (boxContainer.layoutParams as? LayoutParams)?.let {
             it.width = side
             it.height = side
             boxContainer.layoutParams = it
         }
+
         (selectionBorder.layoutParams as? LayoutParams)?.let {
             it.width = frameSize
             it.height = frameSize
@@ -436,28 +597,36 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
         val frame = frameSizePx().toFloat()
         selectionBorder.pivotX = frame / 2f
         selectionBorder.pivotY = frame / 2f
+
+        // Ensure root view rotates around its direct center correctly
+        pivotX = frame / 2f
+        pivotY = frame / 2f
     }
 
     private fun applyScaleToContent() {
-        boxContainer.scaleX = scaleFactor
-        boxContainer.scaleY = scaleFactor
+        val scale = scaleFactor.coerceIn(MIN_SCALE_FACTOR, MAX_SCALE_FACTOR)
 
-        selectionBorder.scaleX = scaleFactor
-        selectionBorder.scaleY = scaleFactor
+        boxContainer.scaleX = scale
+        boxContainer.scaleY = scale
+        selectionBorder.scaleX = scale
+        selectionBorder.scaleY = scale
 
-        val invScale = 1f / scaleFactor
+        val invScale = 1f / scale
+
         borderDrawable.setStroke((baseStrokeWidthPx * invScale).toInt().coerceAtLeast(1), SELECTION_BORDER_COLOR)
         borderDrawable.cornerRadius = baseCornerRadiusPx * invScale
 
         contentText.setTextSize(TypedValue.COMPLEX_UNIT_PX, baseEmojiSizePx * EMOJI_FILL_RATIO)
 
         val frameHalf = frameSizePx() / 2f
-        val extent = frameHalf * (scaleFactor - 1f)
+        val extent = frameHalf * (scale - 1f)
 
         hotspotDelete.translationX = extent
         hotspotDelete.translationY = -extent
+
         hotspotRotate.translationX = -extent
         hotspotRotate.translationY = extent
+
         hotspotResize.translationX = extent
         hotspotResize.translationY = extent
     }
@@ -469,22 +638,41 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
         applyScaleToContent()
     }
 
-    private fun frameSizePx(): Int = baseEmojiSizePx.toInt() + framePadding * 2
+    private fun frameSizePx(): Int {
+        return baseEmojiSizePx.toInt() + framePadding * 2
+    }
 
+    /**
+     * Perfected Center Calculation.
+     * Prevents rotation matrix distortion by calculating center exactly based on translation/pivot
+     * rather than depending entirely on bounded un-rotated mapping.
+     */
     private fun centerOnScreen(): FloatArray {
         val loc = IntArray(2)
+        val p = parent as? View
+        if (p != null) {
+            p.getLocationOnScreen(loc)
+            return floatArrayOf(
+                loc[0] + x + pivotX,
+                loc[1] + y + pivotY
+            )
+        }
+
         getLocationOnScreen(loc)
         return floatArrayOf(loc[0] + width / 2f, loc[1] + height / 2f)
     }
 
-    private fun angleTo(center: FloatArray, rawX: Float, rawY: Float): Float =
-        Math.toDegrees(atan2((rawY - center[1]).toDouble(), (rawX - center[0]).toDouble())).toFloat()
+    private fun angleTo(center: FloatArray, rawX: Float, rawY: Float): Float {
+        return Math.toDegrees(atan2((rawY - center[1]).toDouble(), (rawX - center[0]).toDouble())).toFloat()
+    }
 
-    private fun distanceTo(center: FloatArray, rawX: Float, rawY: Float): Float =
-        hypot((rawX - center[0]).toDouble(), (rawY - center[1]).toDouble()).toFloat()
+    private fun distanceTo(center: FloatArray, rawX: Float, rawY: Float): Float {
+        return hypot((rawX - center[0]).toDouble(), (rawY - center[1]).toDouble()).toFloat()
+    }
 
-    private fun dp(value: Float): Int =
-        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, resources.displayMetrics).toInt()
+    private fun dp(value: Float): Int {
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, resources.displayMetrics).toInt()
+    }
 
     private fun dp(value: Int): Int = dp(value.toFloat())
 
@@ -495,7 +683,6 @@ class StickerOverlayView(context: Context) : FrameLayout(context) {
         private const val DEFAULT_STICKER_SIZE_DP = 180
         private const val EMOJI_FILL_RATIO = 0.85f
 
-        /** Single source of truth for scale bounds — used by gestures AND setScale(). */
         const val MIN_SCALE_FACTOR = 0.3f
         const val MAX_SCALE_FACTOR = 5f
     }

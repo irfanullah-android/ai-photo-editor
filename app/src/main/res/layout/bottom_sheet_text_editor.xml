@@ -3,25 +3,39 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="#191919"
+    android:background="#1A1A1A"
     android:orientation="vertical">
 
-    <!-- Top: EditText box, chota clear/X button uske andar right side me -->
+    <!-- 1. Text Input Container (Jab text edit ho raha ho) -->
     <LinearLayout
         android:id="@+id/textInputContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#191919"
+        android:visibility="gone"
+        android:background="#1F1F1F"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="16dp"
+        android:paddingStart="12dp"
         android:paddingTop="12dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="8dp">
+        android:paddingEnd="12dp"
+        android:paddingBottom="12dp">
+
+        <ImageButton
+            android:id="@+id/btnTextCancel"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:contentDescription="@string/text_editor_cancel"
+            android:padding="6dp"
+            android:src="@drawable/ic_cross"
+            app:tint="#FFFFFF" />
 
         <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp">
 
             <EditText
                 android:id="@+id/etTextEditorInput"
@@ -32,105 +46,79 @@
                 android:imeOptions="actionDone"
                 android:inputType="textCapSentences|textMultiLine|textAutoCorrect"
                 android:maxLines="3"
-                android:paddingStart="14dp"
+                android:minHeight="44dp"
+                android:paddingStart="16dp"
                 android:paddingTop="10dp"
                 android:paddingEnd="42dp"
                 android:paddingBottom="10dp"
                 android:textColor="@android:color/white"
                 android:textColorHint="#80FFFFFF"
-                android:textSize="18sp" />
+                android:textSize="16sp" />
 
             <ImageButton
                 android:id="@+id/btnTextClear"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_gravity="end|center_vertical"
-                android:layout_marginEnd="8dp"
-                android:background="@drawable/bg_handle_circle"
-                android:padding="6dp"
-                android:src="@drawable/ic_cross"/>
-
+                android:layout_marginEnd="6dp"
+                android:background="?selectableItemBackgroundBorderless"
+                android:padding="8dp"
+                android:src="@drawable/ic_cross"
+                app:tint="#A0A0A0" />
         </FrameLayout>
-    </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#2A2A2A" />
-
-    <!-- Intensity row: cross (cancel) - seekbar - check (confirm) -->
-    <LinearLayout
-        android:id="@+id/intensityContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#191919"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingTop="10dp"
-        android:paddingEnd="16dp"
-        android:paddingBottom="6dp">
-
-        <ImageButton
-            android:id="@+id/btnTextCancel"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginEnd="10dp"
-            android:background="@drawable/bg_handle_circle"
-            android:padding="7dp"
-            android:src="@drawable/ic_cross"
-            android:contentDescription="@string/text_editor_cancel" />
-
-        <SeekBar
-            android:id="@+id/sbTextIntensity"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:max="200"
-            android:progressBackgroundTint="#3A3A3A"
-            android:progressTint="@android:color/white"
-            android:thumbTint="@android:color/white" />
 
         <ImageButton
             android:id="@+id/btnTextConfirm"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginStart="10dp"
-            android:background="@drawable/bg_handle_circle"
-            android:padding="7dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:contentDescription="@string/text_editor_done"
+            android:padding="6dp"
             android:src="@drawable/ic_check"
-            android:contentDescription="@string/text_editor_done" />
+            app:tint="#4CAF50" />
     </LinearLayout>
 
-    <!-- Tools bar: sirf rvTools -->
-    <LinearLayout
+    <View
+        android:id="@+id/divider1"
         android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:background="#1F1F1F"
+        android:layout_height="1dp"
+        android:visibility="gone"
+        android:background="#2A2A2A" />
+
+    <!-- 2. Bottom Toolbar Container (Ab yeh UPER aa gaya hai) -->
+    <LinearLayout
+        android:id="@+id/bottomToolbarContainer"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="#191919"
         android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="12dp"
-        android:paddingEnd="4dp">
+        android:orientation="horizontal">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvTools"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingStart="2dp"
-            android:paddingEnd="4dp" />
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
     </LinearLayout>
 
+    <View
+        android:id="@+id/divider2"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#2A2A2A" />
 
+    <!-- 3. Tool Content Container (Ab yeh NECHEE chala gaya hai) -->
     <FrameLayout
         android:id="@+id/toolContentContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#141414"
-        android:minHeight="64dp"
+        android:minHeight="68dp"
         android:paddingStart="16dp"
-        android:paddingTop="10dp"
+        android:paddingTop="12dp"
         android:paddingEnd="16dp"
-        android:paddingBottom="10dp" />
+        android:paddingBottom="12dp" />
 
 </LinearLayout>

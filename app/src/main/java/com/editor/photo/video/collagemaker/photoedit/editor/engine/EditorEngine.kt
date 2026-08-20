@@ -40,13 +40,25 @@ class EditorEngine(
     private val renderGeneration = AtomicLong(0L)
 
     suspend fun initialize(uri: Uri) = withContext(Dispatchers.IO) {
-        baseUri = uri
-        originalBitmap?.recycle()
-        originalBitmap = try {
+        val myGeneration = renderGeneration.incrementAndGet()
+
+        val loadedBitmap = try {
             imageProcessor.loadBitmapForDisplay(uri)
         } catch (e: Exception) {
             null
         }
+
+        // A newer initialize()/render call started while this decode was in flight —
+        // this is a stale (previously selected) photo. Discard it instead of
+        // overwriting the newer session.
+        if (myGeneration != renderGeneration.get()) {
+            loadedBitmap?.recycle()
+            return@withContext
+        }
+
+        baseUri = uri
+        originalBitmap?.recycle()
+        originalBitmap = loadedBitmap
         historyManager.clear()
         layerManager.clear()
     }
@@ -328,7 +340,7 @@ class EditorEngine(
         val result = mutableListOf<EditOperation>()
         val latestTextMap = mutableMapOf<String, EditOperation>()
         val latestStickerMap = mutableMapOf<String, EditOperation>()
-        var latestFrameOp: EditOperation.ApplyFrame? = null   // ➕ naya
+        var latestFrameOp: EditOperation.ApplyFrame? = null
 
         for (op in ops) {
             when (op) {

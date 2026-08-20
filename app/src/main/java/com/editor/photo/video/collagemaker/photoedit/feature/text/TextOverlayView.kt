@@ -31,21 +31,23 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
 
     val boxContainer = FrameLayout(context).apply {
         background = GradientDrawable().apply {
+            // MODIFIED: Solid White border, transparent inside, completely Square (no corner radius)
             setStroke(dp(1).coerceAtLeast(2), SELECTION_BORDER_COLOR)
             setColor(Color.TRANSPARENT)
-            cornerRadius = dp(4).toFloat()
         }
     }
 
     val strokeText = TextView(context).apply {
         gravity = Gravity.CENTER
-        setPadding(dp(16), dp(10), dp(16), dp(10))
+        // Taller vertically (dp(24)), smaller horizontally (dp(8))
+        setPadding(dp(8), dp(24), dp(8), dp(24))
         textSize = 24f
     }
 
     val contentText = TextView(context).apply {
         gravity = Gravity.CENTER
-        setPadding(dp(16), dp(10), dp(16), dp(10))
+        // Taller vertically (dp(24)), smaller horizontally (dp(8))
+        setPadding(dp(8), dp(24), dp(8), dp(24))
         setTextColor(Color.WHITE)
         textSize = 24f
     }
@@ -181,22 +183,25 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
         return delta
     }
 
+    private var isSnapped = false
+    private var hasTransformed = false
+
     private fun handleBodyTouch(event: MotionEvent): Boolean {
         when (event.actionMasked) {
 
             MotionEvent.ACTION_DOWN -> {
-                bodyMode      = BodyMode.DRAG
+                bodyMode = BodyMode.DRAG
                 dragPointerId = event.getPointerId(0)
-                lastDragRawX  = rawXAt(event, 0)
-                lastDragRawY  = rawYAt(event, 0)
+                lastDragRawX = rawXAt(event, 0)
+                lastDragRawY = rawYAt(event, 0)
 
-                downRawX   = lastDragRawX
-                downRawY   = lastDragRawY
+                downRawX = lastDragRawX
+                downRawY = lastDragRawY
                 downTimeMs = event.eventTime
                 isPossibleTap = true
+                hasTransformed = false
 
                 parent?.requestDisallowInterceptTouchEvent(true)
-                listener?.onTransformChanged()
                 return true
             }
 
@@ -224,11 +229,12 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
                 val x2 = rawXAt(event, i2); val y2 = rawYAt(event, i2)
 
                 pinchInitialDistance = hypot((x2 - x1).toDouble(), (y2 - y1).toDouble()).toFloat().coerceAtLeast(1f)
-                pinchInitialScale    = scaleFactor
-                lastPinchAngle  = Math.toDegrees(atan2((y2 - y1).toDouble(), (x2 - x1).toDouble())).toFloat()
-                lastPinchMidX   = (x1 + x2) / 2f
-                lastPinchMidY   = (y1 + y2) / 2f
+                pinchInitialScale = scaleFactor
+                lastPinchAngle = Math.toDegrees(atan2((y2 - y1).toDouble(), (x2 - x1).toDouble())).toFloat()
+                lastPinchMidX = (x1 + x2) / 2f
+                lastPinchMidY = (y1 + y2) / 2f
 
+                notifyTransformStarted()
                 parent?.requestDisallowInterceptTouchEvent(true)
                 return true
             }
@@ -241,16 +247,25 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
                         val currentX = rawXAt(event, index)
                         val currentY = rawYAt(event, index)
 
+                        val dx = currentX - lastDragRawX
+                        val dy = currentY - lastDragRawY
+
                         if (isPossibleTap) {
                             val moved = hypot((currentX - downRawX).toDouble(), (currentY - downRawY).toDouble())
-                            if (moved > touchSlop) isPossibleTap = false
+                            if (moved > touchSlop) {
+                                isPossibleTap = false
+                                notifyTransformStarted()
+                            }
                         }
 
-                        translationX += (currentX - lastDragRawX)
-                        translationY += (currentY - lastDragRawY)
-                        lastDragRawX  = currentX
-                        lastDragRawY  = currentY
-                        listener?.onTransformChanged()
+                        if (!isPossibleTap) {
+                            translationX += dx
+                            translationY += dy
+                            listener?.onTransformChanged()
+                        }
+
+                        lastDragRawX = currentX
+                        lastDragRawY = currentY
                         return true
                     }
 
@@ -263,22 +278,35 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
                         val x2 = rawXAt(event, i2); val y2 = rawYAt(event, i2)
 
                         val currentDistance = hypot((x2 - x1).toDouble(), (y2 - y1).toDouble()).toFloat().coerceAtLeast(1f)
-                        val currentAngle    = Math.toDegrees(atan2((y2 - y1).toDouble(), (x2 - x1).toDouble())).toFloat()
-                        val currentMidX     = (x1 + x2) / 2f
-                        val currentMidY     = (y1 + y2) / 2f
+                        val currentAngle = Math.toDegrees(atan2((y2 - y1).toDouble(), (x2 - x1).toDouble())).toFloat()
+                        val currentMidX = (x1 + x2) / 2f
+                        val currentMidY = (y1 + y2) / 2f
 
-                        // Absolute scale — no compounding, no drift
+                        // 1. Focal Point Pinch & Scale (Prevents drift away from fingers)
+                        val prevScale = scaleFactor
                         val distanceRatio = currentDistance / pinchInitialDistance
-                        scaleFactor = (pinchInitialScale * distanceRatio).coerceIn(0.2f, 6f)
+                        val newScale = (pinchInitialScale * distanceRatio).coerceIn(0.2f, 6f)
+
+                        if (prevScale != 0f) {
+                            val scaleRatio = newScale / prevScale
+                            val viewCenterX = x + (width / 2f) + translationX
+                            val viewCenterY = y + (height / 2f) + translationY
+
+                            translationX += (currentMidX - viewCenterX) * (1f - scaleRatio) + (currentMidX - lastPinchMidX)
+                            translationY += (currentMidY - viewCenterY) * (1f - scaleRatio) + (currentMidY - lastPinchMidY)
+                        }
+
+                        scaleFactor = newScale
                         applyScaleToContent()
 
-                        rotation += angleDelta(lastPinchAngle, currentAngle)
-                        translationX += (currentMidX - lastPinchMidX)
-                        translationY += (currentMidY - lastPinchMidY)
+                        // 2. Rotation with Angle Snapping & Haptic Feedback
+                        val deltaAngle = angleDelta(lastPinchAngle, currentAngle)
+                        val targetRotation = rotation + deltaAngle
+                        rotation = getSnappedRotation(targetRotation)
 
                         lastPinchAngle = currentAngle
-                        lastPinchMidX  = currentMidX
-                        lastPinchMidY  = currentMidY
+                        lastPinchMidX = currentMidX
+                        lastPinchMidY = currentMidY
 
                         listener?.onTransformChanged()
                         return true
@@ -293,13 +321,13 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
                 if (bodyMode == BodyMode.TRANSFORM &&
                     (liftedId == pinchPointerId1 || liftedId == pinchPointerId2)
                 ) {
-                    val remainingId    = if (liftedId == pinchPointerId1) pinchPointerId2 else pinchPointerId1
+                    val remainingId = if (liftedId == pinchPointerId1) pinchPointerId2 else pinchPointerId1
                     val remainingIndex = event.findPointerIndex(remainingId)
                     if (remainingIndex != -1) {
-                        bodyMode      = BodyMode.DRAG
+                        bodyMode = BodyMode.DRAG
                         dragPointerId = remainingId
-                        lastDragRawX  = rawXAt(event, remainingIndex)
-                        lastDragRawY  = rawYAt(event, remainingIndex)
+                        lastDragRawX = rawXAt(event, remainingIndex)
+                        lastDragRawY = rawYAt(event, remainingIndex)
                     } else {
                         bodyMode = BodyMode.NONE
                     }
@@ -311,28 +339,53 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 val wasActive = bodyMode != BodyMode.NONE
-                val elapsed   = event.eventTime - downTimeMs
-                val isTap     = event.actionMasked == MotionEvent.ACTION_UP &&
+                val elapsed = event.eventTime - downTimeMs
+                val isTap = event.actionMasked == MotionEvent.ACTION_UP &&
                         isPossibleTap &&
-                        bodyMode == BodyMode.DRAG &&
                         elapsed in 0..tapTimeout
 
-                bodyMode        = BodyMode.NONE
-                dragPointerId   = MotionEvent.INVALID_POINTER_ID
+                bodyMode = BodyMode.NONE
+                dragPointerId = MotionEvent.INVALID_POINTER_ID
                 pinchPointerId1 = MotionEvent.INVALID_POINTER_ID
                 pinchPointerId2 = MotionEvent.INVALID_POINTER_ID
-                isPossibleTap   = false
+                isPossibleTap = false
+                isSnapped = false
 
                 if (isTap) {
-                    // Body tap → directly open text editor (same as tapping Edit handle)
                     listener?.onEditRequested()
-                } else if (wasActive) {
+                } else if (wasActive && hasTransformed) {
                     listener?.onTransformCommitted()
                 }
+                hasTransformed = false
                 return true
             }
         }
         return false
+    }
+
+    private fun notifyTransformStarted() {
+        if (!hasTransformed) {
+            hasTransformed = true
+            listener?.onTransformChanged()
+        }
+    }
+
+    private fun getSnappedRotation(rawRotation: Float): Float {
+        val snapThreshold = 3.0f
+        val normalized = (rawRotation % 360f + 360f) % 360f
+        val snapAngles = floatArrayOf(0f, 90f, 180f, 270f, 360f)
+
+        for (snap in snapAngles) {
+            if (kotlin.math.abs(normalized - snap) <= snapThreshold) {
+                if (!isSnapped) {
+                    performHapticFeedback(android.view.HapticFeedbackConstants.VIRTUAL_KEY)
+                    isSnapped = true
+                }
+                return rawRotation + (snap - normalized)
+            }
+        }
+        isSnapped = false
+        return rawRotation
     }
 
     // ── Rotate handle ────────────────────────────────────────────────────────
@@ -426,30 +479,15 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
 
     /**
      * Applies the current [scaleFactor] uniformly to the view via [scaleX]/[scaleY].
-     *
-     * ─── WHY scaleX/scaleY instead of changing textSize? ───────────────────
-     * Previously only [contentText].textSize was multiplied by scaleFactor. That
-     * made text wrap to more lines as it grew, so the view only expanded *vertically*.
-     * Now the entire FrameLayout is scaled via Android's built-in view scaling,
-     * which applies the same ratio to BOTH axes → uniform horizontal + vertical zoom.
-     *
-     * Text size is kept at the BASE value; the visual enlargement comes entirely
-     * from the view's own scale transform. Stroke width is also kept at base (the
-     * view scale enlarges strokes too).
-     * ────────────────────────────────────────────────────────────────────────
      */
     private fun applyScaleToContent() {
-        // Uniform 2-D scale on the entire overlay (handles included).
-        // This is the key fix: horizontal AND vertical scaling both work now.
         this.scaleX = scaleFactor
         this.scaleY = scaleFactor
 
-        // Text size stays at base — the visual size change is done by scaleX/Y above.
         val textSizeSp = baseTextSizePx / resources.displayMetrics.scaledDensity
         contentText.textSize = textSizeSp
         strokeText.textSize  = textSizeSp
 
-        // Stroke width also stays at base (view scale enlarges it naturally).
         if (baseStrokeWidthPx < MIN_VISIBLE_STROKE_PX) {
             strokeText.visibility = View.GONE
         } else {
@@ -504,12 +542,10 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
         val resolvedTypeface = Typeface.create(typeface, style)
 
         if (text.isEmpty()) {
-            // ── Show placeholder when text is empty ──────────────────────
             contentText.text = PLACEHOLDER_TEXT
             contentText.setTextColor(PLACEHOLDER_COLOR)
             strokeText.visibility = View.GONE
         } else {
-            // ── Show real text ────────────────────────────────────────────
             contentText.text     = text
             contentText.setTextColor(color)
             contentText.typeface = resolvedTypeface
@@ -527,8 +563,6 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
         applyScaleToContent()
     }
 
-    // ── Geometry helpers ─────────────────────────────────────────────────────
-
     private fun centerOnScreen(): FloatArray {
         val loc = IntArray(2)
         getLocationOnScreen(loc)
@@ -544,13 +578,15 @@ class TextOverlayView(context: Context) : FrameLayout(context) {
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     companion object {
-        private const val SELECTION_BORDER_COLOR  = 0xFF3D8BFF.toInt()
+        // MODIFIED: Changed border color to Solid White
+        private const val SELECTION_BORDER_COLOR  = Color.WHITE
         private const val MIN_VISIBLE_STROKE_PX   = 1.5f
         private const val HOTSPOT_DP = 64
         private const val ICON_DP    = 32
 
         // Placeholder shown inside the box when no text has been set yet
         private const val PLACEHOLDER_TEXT  = "Tap to enter"
-        private val      PLACEHOLDER_COLOR  = 0x80FFFFFF.toInt()  // 50% white
+        // Lighter/fainter look (~40% white)
+        private val      PLACEHOLDER_COLOR  = 0x66FFFFFF.toInt()
     }
 }

@@ -26,15 +26,26 @@ class SplashFragment : BaseFragment<FragmentSplashBinding>(R.layout.fragment_spl
     private fun navigateScreen() {
         val context = requireContext()
 
-        if (SharedPreference.isOnBoardingShown(context)) {
-            CommonData.navigateToActivity(
-                context,
-                MainActivity::class.java
-            )
-        } else {
+        val isLanguageSelected = SharedPreference.isLanguageSelected(context)
+        val isOnBoardingShown = SharedPreference.isOnBoardingShown(context)
+
+        if (!isLanguageSelected) {
+            // Agar language select nahi hui, toh Language screen par bhejo
             navigateTo(
                 R.id.splashFragment,
                 R.id.action_splashFragment_to_languageFragment
+            )
+        } else if (!isOnBoardingShown) {
+            // Agar language ho gayi hai par onboarding nahi hui, toh Onboarding par bhejo
+            navigateTo(
+                R.id.splashFragment,
+                R.id.action_splashFragment_to_onBoardingFragment
+            )
+        } else {
+            // Dono ho chuke hain toh MainActivity par bhejo
+            CommonData.navigateToActivity(
+                context,
+                MainActivity::class.java
             )
         }
     }
