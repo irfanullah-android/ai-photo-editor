@@ -124,7 +124,7 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun observeViewModel() {
-        lifecycleScope.launchWhenStarted {
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             adjustViewModel.adjustments.collect { list ->
                 if (list.isNotEmpty()) {
                     if (adjustmentAdapter == null) {
@@ -151,7 +151,7 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
             }
         }
 
-        lifecycleScope.launchWhenStarted {
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             adjustViewModel.selectedAdjustment.collect { adj ->
                 adj?.let { updateAdjustmentUI(it) }
             }
@@ -272,7 +272,7 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun hasAnyMatrixAdjustment(): Boolean =
-        adjustViewModel.adjustmentValues.value.filterKeys { it != AdjustmentType.SHARPEN }.values.any { it != 0 }
+        adjustViewModel.adjustmentValues.value.filterKeys { it != AdjustmentType.SHARPEN && it != AdjustmentType.AUTO }.values.any { it != 0 }
 
     private fun sharpenAmount(): Int = adjustViewModel.adjustmentValues.value[AdjustmentType.SHARPEN] ?: 0
 
@@ -289,7 +289,7 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
             return
         }
 
-        renderJob = lifecycleScope.launch(Dispatchers.Default) {
+        renderJob = viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Default) {
             try {
                 if (debounceMs > 0) delay(debounceMs)
                 ensureActive()
@@ -427,15 +427,6 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
         dismiss()
     }
 
-    private fun cancelAdjustments() {
-        wasApplied = false
-        imageView?.colorFilter = null
-        baselineBitmap?.let { safe -> if (!safe.isRecycled) imageView?.setImageBitmap(safe) }
-        onAdjustApplied?.invoke(null)
-        cleanup()
-        dismiss()
-    }
-
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
         if (!wasApplied) {
@@ -454,7 +445,7 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
 
         val autoIntensity = (adjustViewModel.adjustmentValues.value[AdjustmentType.AUTO] ?: 100) / 100f
 
-        autoAnalysisJob = lifecycleScope.launch {
+        autoAnalysisJob = viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val calculatedValues = withContext(Dispatchers.Default) {
                     AutoEnhanceCalculator.calculate(baseline)
@@ -488,12 +479,12 @@ class AdjustBottomSheet : BottomSheetDialogFragment() {
 
     private fun cleanup() {
         renderJob?.cancel()
+        autoAnalysisJob?.cancel()
         lastBitmap?.let { if (!it.isRecycled && it != originalBitmap) it.recycle() }
         lastBitmap = null
     }
 
     override fun onDestroyView() {
-        autoAnalysisJob?.cancel()
         cleanup()
         imageView?.colorFilter = null
         adjustmentAdapter = null

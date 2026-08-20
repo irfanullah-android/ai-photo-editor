@@ -19,6 +19,8 @@ class AdjustViewModel : ViewModel() {
     val adjustmentValues: StateFlow<Map<AdjustmentType, Int>> = _adjustmentValues.asStateFlow()
 
     fun initAdjustments(initialList: List<AdjustmentModel>) {
+        if (_adjustments.value.isNotEmpty()) return
+
         _adjustments.value = initialList
 
         if (_selectedAdjustment.value == null) {
@@ -26,7 +28,6 @@ class AdjustViewModel : ViewModel() {
                 ?: initialList.firstOrNull()
         }
 
-        // Auto سمیت تمام ایڈجسٹمنٹس کی ابتدائی ویلیوز شامل کی گئی ہیں
         val initialValues = initialList.associate { it.type to it.value }
         _adjustmentValues.value = initialValues
     }

@@ -79,12 +79,22 @@ class EditorSessionViewModel @Inject constructor(
     val activeStickerId: StateFlow<String?> = _activeStickerId.asStateFlow()
 
     private var loadJob: Job? = null
-    private var refreshJob: Job? = null   // <-- keep this too, unchanged
+    private var refreshJob: Job? = null
 
     fun loadImage(uri: Uri) {
         loadJob?.cancel()
+        refreshJob?.cancel()
+
         loadJob = viewModelScope.launch(Dispatchers.Default) {
             withContext(Dispatchers.Main) { _uiState.value = EditorUiState.Loading }
+            editorRepository.clear()
+            cacheRepository.clearCache()
+
+            withContext(Dispatchers.Main) {
+                _activeTextId.value = null
+                _activeStickerId.value = null
+            }
+
             loadImageUseCase(uri)
             withContext(Dispatchers.Main) {
                 _editorState.value = EditorState(baseImageUri = uri.toString())

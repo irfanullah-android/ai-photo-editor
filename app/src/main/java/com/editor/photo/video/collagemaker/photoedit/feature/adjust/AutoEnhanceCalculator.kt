@@ -9,31 +9,22 @@ import kotlin.math.sqrt
 
 object AutoEnhanceCalculator {
 
-    private const val ANALYSIS_MAX_DIMENSION = 150
+    private const val ANALYSIS_MAX_DIMENSION = 200
 
-    private const val MAX_BRIGHTNESS = 22
-    private const val MAX_CONTRAST = 18
-    private const val MAX_SHADOW = 20
-    private const val MAX_SATURATION = 16
-    private const val MAX_WARMTH = 12
-    private const val MAX_TINT = 10
-    private const val MAX_SHARPEN = 14
+    // Enhanced professional limits for stronger pop and clarity
+    private const val MAX_BRIGHTNESS = 40
+    private const val MAX_CONTRAST = 32
+    private const val MAX_SHADOW = 35
+    private const val MAX_HIGHLIGHT = 28
+    private const val MAX_SATURATION = 32
+    private const val MAX_WARMTH = 22
+    private const val MAX_TINT = 22
+    private const val MAX_SHARPEN = 26
 
-    private const val MIN_CONTRAST_POLISH = 8
-    private const val MIN_SATURATION_POLISH = 6
-    private const val MIN_SHARPEN_POLISH = 6
-
-    private const val CONTRAST_SKIP_POLISH_ABOVE = 0.90f
-    private const val SATURATION_SKIP_POLISH_ABOVE = 0.70f
-    private const val SHARPEN_SKIP_POLISH_ABOVE = 0.09f
-
-    private const val DARK_THRESHOLD = 70f / 255f
-    private const val TARGET_LUMINANCE = 0.5f
+    private const val TARGET_LUMINANCE = 138.0
+    private const val IDEAL_DYNAMIC_RANGE = 0.85f
     private const val TARGET_SATURATION = 0.42f
-    private const val IDEAL_DYNAMIC_RANGE = 0.75f
-    private const val SHADOW_TOLERANCE = 0.12f
-
-    private const val SOFTNESS_EDGE_THRESHOLD = 0.045f
+    private const val SOFTNESS_EDGE_THRESHOLD = 0.055f
 
     fun calculate(source: Bitmap): Map<AdjustmentType, Int> {
         if (source.isRecycled || source.width == 0 || source.height == 0) {
@@ -61,12 +52,12 @@ object AutoEnhanceCalculator {
     }
 
     private data class ImageStats(
-        val avgLuminance: Float,
-        val shadowPercent: Float,
+        val r: Int,
+        val g: Int,
+        val b: Int,
+        val avgLuminance: Double,
+        val avgSaturation: Double,
         val dynamicRange: Float,
-        val avgSaturation: Float,
-        val warmthBias: Float,
-        val tintBias: Float,
         val avgEdgeGradient: Float
     )
 
@@ -76,17 +67,12 @@ object AutoEnhanceCalculator {
         val pixels = IntArray(w * h)
         bitmap.getPixels(pixels, 0, w, 0, 0, w, h)
 
-        var sumLuma = 0f
-        var sumSat = 0f
-        var sumR = 0L
-        var sumG = 0L
-        var sumB = 0L
-        var darkCount = 0
+        var totalR = 0L
+        var totalG = 0L
+        var totalB = 0L
 
         val bucketCount = 64
         val histogram = IntArray(bucketCount)
-        val hsv = FloatArray(3)
-
         val luma = FloatArray(w * h)
 
         val total = pixels.size
@@ -96,45 +82,40 @@ object AutoEnhanceCalculator {
             val g = Color.green(pixel)
             val b = Color.blue(pixel)
 
+            totalR += r
+            totalG += g
+            totalB += b
+
             val l = (0.299f * r + 0.587f * g + 0.114f * b) / 255f
             luma[i] = l
-            sumLuma += l
-            sumR += r
-            sumG += g
-            sumB += b
-
-            if (l < DARK_THRESHOLD) darkCount++
 
             val bucket = (l * (bucketCount - 1)).roundToInt().coerceIn(0, bucketCount - 1)
             histogram[bucket]++
-
-            Color.RGBToHSV(r, g, b, hsv)
-            sumSat += hsv[1]
         }
 
-        val avgLuminance = sumLuma / total
-        val avgSaturation = sumSat / total
-        val shadowPercent = darkCount / total.toFloat()
+        val r = (totalR / total).toInt()
+        val g = (totalG / total).toInt()
+        val b = (totalB / total).toInt()
 
-        val p5 = percentileFromHistogram(histogram, total, 0.05f)
-        val p95 = percentileFromHistogram(histogram, total, 0.95f)
+        val avgLum = r * 0.299 + g * 0.587 + b * 0.114
+
+        val mx = maxOf(r, g, b)
+        val mn = minOf(r, g, b)
+        val avgSat = if (mx == 0) 0.0 else (mx - mn).toDouble() / mx
+
+        val p5 = percentileFromHistogram(histogram, total, 0.04f)
+        val p95 = percentileFromHistogram(histogram, total, 0.96f)
         val dynamicRange = (p95 - p5).coerceIn(0f, 1f)
-
-        val avgR = sumR / total.toFloat()
-        val avgG = sumG / total.toFloat()
-        val avgB = sumB / total.toFloat()
-        val warmthBias = ((avgR - avgB) / 255f).coerceIn(-1f, 1f)
-        val tintBias = (((avgR + avgB) / 2f - avgG) / 255f).coerceIn(-1f, 1f)
 
         val avgEdgeGradient = averageEdgeGradient(luma, w, h)
 
         return ImageStats(
-            avgLuminance = avgLuminance,
-            shadowPercent = shadowPercent,
+            r = r,
+            g = g,
+            b = b,
+            avgLuminance = avgLum,
+            avgSaturation = avgSat,
             dynamicRange = dynamicRange,
-            avgSaturation = avgSaturation,
-            warmthBias = warmthBias,
-            tintBias = tintBias,
             avgEdgeGradient = avgEdgeGradient
         )
     }
@@ -177,45 +158,59 @@ object AutoEnhanceCalculator {
     private fun buildValues(s: ImageStats): Map<AdjustmentType, Int> {
         val result = mutableMapOf<AdjustmentType, Int>()
 
-        val lumaDeficit = ((TARGET_LUMINANCE - s.avgLuminance) / TARGET_LUMINANCE).coerceIn(0f, 1f)
-        val brightness = (smoothstep(lumaDeficit) * MAX_BRIGHTNESS).roundToInt()
-            .coerceIn(0, MAX_BRIGHTNESS)
+        // 1. Stronger Professional Brightness
+        val brightness = ((TARGET_LUMINANCE - s.avgLuminance) * 0.5)
+            .coerceIn(-MAX_BRIGHTNESS.toDouble(), MAX_BRIGHTNESS.toDouble())
+            .roundToInt()
 
+        // 2. High Impact Contrast
         val rangeDeficit = ((IDEAL_DYNAMIC_RANGE - s.dynamicRange) / IDEAL_DYNAMIC_RANGE).coerceIn(0f, 1f)
-        val contrastCorrection = smoothstep(rangeDeficit) * MAX_CONTRAST
-        val contrastPolish = if (s.dynamicRange < CONTRAST_SKIP_POLISH_ABOVE) MIN_CONTRAST_POLISH.toFloat() else 0f
-        val contrast = max(contrastCorrection, contrastPolish).roundToInt()
-            .coerceIn(0, MAX_CONTRAST)
+        val contrast = (smoothstep(rangeDeficit) * MAX_CONTRAST.toFloat())
+            .roundToInt()
+            .coerceIn(8, MAX_CONTRAST)
 
-        val shadowExcess = ((s.shadowPercent - SHADOW_TOLERANCE) / (1f - SHADOW_TOLERANCE)).coerceIn(0f, 1f)
-        val shadow = (smoothstep(shadowExcess) * MAX_SHADOW).roundToInt()
-            .coerceIn(0, MAX_SHADOW)
+        // 3. Deep Shadows & Highlights Opening
+        val shadows = if (s.avgLuminance < 120.0) {
+            ((120.0 - s.avgLuminance) * 0.55).roundToInt().coerceIn(12, MAX_SHADOW)
+        } else {
+            6
+        }
 
-        val highlight = 0
+        val highlights = if (s.avgLuminance > 140.0) {
+            ((s.avgLuminance - 140.0) * 0.45).roundToInt().coerceIn(10, MAX_HIGHLIGHT)
+        } else {
+            6
+        }
 
-        val satDeficit = ((TARGET_SATURATION - s.avgSaturation) / TARGET_SATURATION).coerceIn(0f, 1f)
-        val saturationCorrection = smoothstep(satDeficit) * MAX_SATURATION
-        val saturationPolish = if (s.avgSaturation < SATURATION_SKIP_POLISH_ABOVE) MIN_SATURATION_POLISH.toFloat() else 0f
-        val saturation = max(saturationCorrection, saturationPolish).roundToInt()
-            .coerceIn(0, MAX_SATURATION)
+        // 4. Vibrant Color Saturation
+        val satDeficit = ((TARGET_SATURATION - s.avgSaturation.toFloat()) / TARGET_SATURATION).coerceIn(0f, 1f)
+        val saturation = (smoothstep(satDeficit) * MAX_SATURATION.toFloat())
+            .roundToInt()
+            .coerceIn(10, MAX_SATURATION)
 
-        val warmth = if (s.warmthBias < -0.04f) {
-            (smoothstep(-s.warmthBias) * MAX_WARMTH).roundToInt().coerceIn(0, MAX_WARMTH)
-        } else 0
+        // 5. White Balance Warmth Correction
+        val warmCast = (s.r - s.b).toDouble()
+        val warmth = (-warmCast * 0.5)
+            .coerceIn(-MAX_WARMTH.toDouble(), MAX_WARMTH.toDouble())
+            .roundToInt()
 
-        val tint = if (s.tintBias > 0.04f) {
-            (smoothstep(s.tintBias) * MAX_TINT).roundToInt().coerceIn(0, MAX_TINT)
-        } else 0
+        // 6. Tint Balance Correction
+        val greenCast = s.g - ((s.r + s.b) / 2.0)
+        val tint = (greenCast * 0.5)
+            .coerceIn(-MAX_TINT.toDouble(), MAX_TINT.toDouble())
+            .roundToInt()
 
+        // 7. Crystal Clear Sharpening
         val softnessDeficit = ((SOFTNESS_EDGE_THRESHOLD - s.avgEdgeGradient) / SOFTNESS_EDGE_THRESHOLD)
             .coerceIn(0f, 1f)
-        val sharpen = (smoothstep(softnessDeficit) * MAX_SHARPEN).roundToInt()
-            .coerceIn(0, MAX_SHARPEN)
+        val sharpen = (smoothstep(softnessDeficit) * MAX_SHARPEN.toFloat())
+            .roundToInt()
+            .coerceIn(10, MAX_SHARPEN)
 
         result[AdjustmentType.BRIGHTNESS] = brightness
         result[AdjustmentType.CONTRAST] = contrast
-        result[AdjustmentType.SHADOW] = shadow
-        result[AdjustmentType.HIGHLIGHT] = highlight
+        result[AdjustmentType.SHADOW] = shadows
+        result[AdjustmentType.HIGHLIGHT] = highlights
         result[AdjustmentType.SATURATION] = saturation
         result[AdjustmentType.WARMTH] = warmth
         result[AdjustmentType.TINT] = tint

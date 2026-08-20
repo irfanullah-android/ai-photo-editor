@@ -819,10 +819,7 @@ class PhotoStudioFragment :
         showExportSuccessDialog(uri)
     }
 
-    private fun syncDisplayedBitmapToViewModel() {
-        val currentBitmap = (photoEditorView.source.drawable as? BitmapDrawable)?.bitmap ?: return
-        viewModel.syncPreviewBitmap(currentBitmap)
-    }
+
 
     private fun openToolBottomSheet(tool: EditorTool) {
         commitAndCloseAllOverlays()
@@ -850,10 +847,9 @@ class PhotoStudioFragment :
             imageUri = currentUri,
             sourceBitmap = currentBitmap,
             imageView = photoEditorView.source,
-            onDismissed = { syncDisplayedBitmapToViewModel() }
+            onDismissed = null
         ).show(childFragmentManager, "filter")
     }
-
     private fun showAdjustBottomSheet() {
         val currentBitmap = getCurrentPreviewBitmapSafe() ?: return
         val currentUri = viewModel.editorState.value.baseImageUri?.let { Uri.parse(it) }
@@ -862,13 +858,7 @@ class PhotoStudioFragment :
             currentUri,
             photoEditorView.source,
             currentBitmap
-        ) { adjusted ->
-            adjusted?.let {
-                viewModel.syncPreviewBitmap(it)
-                showToast("Adjustments applied")
-            }
-            syncDisplayedBitmapToViewModel()
-        }.show(childFragmentManager, "adjust")
+        ) { }.show(childFragmentManager, "adjust")
     }
 
     private fun showEffectBottomSheet() {

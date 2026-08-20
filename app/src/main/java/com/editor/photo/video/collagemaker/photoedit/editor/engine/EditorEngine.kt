@@ -48,9 +48,6 @@ class EditorEngine(
             null
         }
 
-        // A newer initialize()/render call started while this decode was in flight —
-        // this is a stale (previously selected) photo. Discard it instead of
-        // overwriting the newer session.
         if (myGeneration != renderGeneration.get()) {
             loadedBitmap?.recycle()
             return@withContext

@@ -9,9 +9,11 @@ import com.editor.photo.video.collagemaker.photoedit.databinding.ItemAdjustmentB
 import com.editor.photo.video.collagemaker.photoedit.models.bottomsheets.AdjustmentModel
 
 class AdjustmentAdapter(
-    private val adjustments: List<AdjustmentModel>,
+    private val adjustments: MutableList<AdjustmentModel>,
     private val onAdjustmentClick: (AdjustmentModel, Int) -> Unit
 ) : RecyclerView.Adapter<AdjustmentAdapter.AdjustmentViewHolder>() {
+
+    private var selectedPosition = adjustments.indexOfFirst { it.isSelected }.coerceAtLeast(0)
 
     inner class AdjustmentViewHolder(
         private val binding: ItemAdjustmentBinding
@@ -22,7 +24,9 @@ class AdjustmentAdapter(
                 tvAdjustmentName.text = adjustment.name
                 ivAdjustmentIcon.setImageResource(adjustment.iconRes)
 
-                if (adjustment.isSelected) {
+                val isSelected = position == selectedPosition
+
+                if (isSelected) {
                     cardAdjustment.setCardBackgroundColor(
                         ContextCompat.getColor(root.context, R.color.white)
                     )
@@ -43,10 +47,18 @@ class AdjustmentAdapter(
                 )
 
                 root.setOnClickListener {
-                    adjustments.forEach { it.isSelected = false }
-                    adjustment.isSelected = true
-                    notifyDataSetChanged()
-                    onAdjustmentClick(adjustment, position)
+                    val previousSelected = selectedPosition
+                    selectedPosition = adapterPosition
+
+                    if (selectedPosition != RecyclerView.NO_POSITION) {
+                        adjustments.getOrNull(previousSelected)?.isSelected = false
+                        adjustments.getOrNull(selectedPosition)?.isSelected = true
+
+                        notifyItemChanged(previousSelected)
+                        notifyItemChanged(selectedPosition)
+
+                        onAdjustmentClick(adjustments[selectedPosition], selectedPosition)
+                    }
                 }
             }
         }
